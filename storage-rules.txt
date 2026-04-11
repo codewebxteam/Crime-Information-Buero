@@ -1,0 +1,11 @@
+// FOR TESTING - ALLOW ALL OPERATIONS
+// Replace this in Firebase Console → Storage → Rules
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if true;
+    }
+  }
+}

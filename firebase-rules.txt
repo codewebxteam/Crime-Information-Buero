@@ -1,0 +1,85 @@
+// Firebase Firestore Security Rules
+// Add these rules in Firebase Console -> Firestore -> Rules
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Allow anyone to read (for demo - tighten in production)
+    // Allow authenticated users to read their own data
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Allow admins to read/write admin data
+    match /admins/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    
+    // Membership applications - allow read for authenticated, write for admins
+    match /membershipApplications/{appId} {
+      allow read: if request.auth != null;
+      allow create: if true; // Anyone can apply
+      allow update, delete: if request.auth != null;
+    }
+    
+    // Certificates
+    match /certificates/{certId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Notifications
+    match /notifications/{notifId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null;
+    }
+    
+    // Audit Logs
+    match /auditLogs/{logId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+    }
+    
+    // Settings
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}
+
+// Firebase Storage Rules
+// Add these rules in Firebase Console -> Storage -> Rules
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Allow authenticated users to read
+    // Allow anyone to upload (for membership applications)
+    match /photos/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null || true; // For demo
+    }
+    
+    match /kyc/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null || true; // For demo
+    }
+    
+    match /certificates/{allPaths=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
+
+// IMPORTANT SECURITY NOTES:
+// 1. These rules are for DEMO/TESTING only
+// 2. In production, tighten the rules:
+//    - Remove "|| true" conditions
+//    - Add proper authentication checks
+//    - Add role-based access control
+//    - Validate input data
+// 3. For production, use Firebase Cloud Functions for sensitive operations

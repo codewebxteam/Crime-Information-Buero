@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+/* Yeh line Tailwind ko batati hai ki 'dark' class se theme switch karni hai */
+@theme {
+  --color-background: white;
+  --color-foreground: black;
+}
+
+/* V4 mein dark mode selector ko define karna */
+@variant dark (&:where(.dark, .dark *));
+
+/* Premium Dark Mode - Enhanced (Lighter) */
+.dark {
+  --dark-bg-primary: #1e2128;
+  --dark-bg-secondary: #252a33;
+  --dark-bg-card: #2d333d;
+  --dark-border: #3d4455;
+}
+
+.dark body {
+  background-color: var(--dark-bg-primary);
+  color: #e5e7eb;
+}
+
+/* Premium dark backgrounds with subtle gradients */
+.dark .dark\:bg-\[#0a0a0a\] {
+  background: linear-gradient(180deg, #252a33 0%, #1e2128 100%);
+}
+
+.dark .dark\:bg-\[#0f0f0f\] {
+  background: linear-gradient(180deg, #2d333d 0%, #252a33 100%);
+}
+
+.dark .dark\:bg-\[\#111\] {
+  background: linear-gradient(180deg, #2d333d 0%, #252a33 100%);
+}
+
+.dark .dark\:bg-\[#050505\] {
+  background: linear-gradient(180deg, #1e2128 0%, #181b21 100%);
+}
+
+.dark .dark\:bg-\[#080808\] {
+  background: linear-gradient(180deg, #1e2128 0%, #14171c 100%);
+}
+
+/* Enhanced dark borders */
+.dark .dark\:border-white\/5 {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.dark .dark\:border-white\/10 {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.dark .dark\:border-gray-800 {
+  border-color: #3d4455;
+}
+
+/* Premium glassmorphism for dark mode */
+.dark .dark\:bg-white\/5 {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px);
+}
+
+.dark .dark\:bg-white\/10 {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+}
+
+/* Scrollbar styling */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(185, 28, 28, 0.5);
+  border-radius: 10px;
+}
+
+@keyframes scan {
+  0% { top: 0%; }
+  100% { top: 100%; }
+}
+.animate-scan {
+  position: absolute;
+  animation: scan 3s linear infinite;
+}
+@keyframes marquee {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-marquee {
+  display: inline-block;
+  min-width: 100%;
+  animation: marquee 20s linear infinite;
+}
+html.lenis {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}

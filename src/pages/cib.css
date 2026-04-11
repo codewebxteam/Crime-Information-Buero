@@ -1,0 +1,781 @@
+/* CIB Custom Styles - Theme matching the project */
+
+/* Section Styles */
+.cib-section {
+  position: relative;
+  min-height: 100vh;
+  background: #f8fafc;
+  overflow: hidden;
+  padding: 4rem 1rem;
+}
+
+.cib-shape {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.5;
+}
+
+.cib-shape-1 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(0, 43, 91, 0.15) 0%, transparent 70%);
+  top: -100px;
+  right: -100px;
+}
+
+.cib-shape-2 {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(185, 28, 28, 0.1) 0%, transparent 70%);
+  bottom: -50px;
+  left: -50px;
+}
+
+/* Container */
+.cib-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 10;
+}
+
+/* Spacing */
+.cib-space-y-12 > * + * {
+  margin-top: 3rem;
+}
+
+.cib-space-y-12 {
+  padding-bottom: 3rem;
+}
+
+/* Text Alignment */
+.cib-text-center {
+  text-align: center;
+}
+
+.cib-mb-12 {
+  margin-bottom: 3rem;
+}
+
+.cib-mb-4 {
+  margin-bottom: 1rem;
+}
+
+/* Title Styles */
+.cib-title-icon {
+  color: #002B5B;
+  margin-bottom: 0.5rem;
+}
+
+.cib-title {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: #002B5B;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.cib-title-md {
+  font-size: 2rem;
+}
+
+.cib-subtitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #B91C1C;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* Card Styles */
+.cib-card {
+  background: white;
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.cib-card:hover {
+  box-shadow: 0 8px 30px rgba(0, 43, 91, 0.15);
+}
+
+.cib-bg-dark {
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+}
+
+.cib-border-gray {
+  border: 1px solid #e2e8f0;
+}
+
+.cib-p-8 {
+  padding: 2rem;
+}
+
+/* Grid System */
+.cib-grid {
+  display: grid;
+  gap: 2rem;
+}
+
+.cib-grid-cols-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.cib-grid-cols-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 768px) {
+  .cib-grid-cols-2,
+  .cib-grid-cols-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Icon Styles */
+.cib-icon-red {
+  color: #002B5B;
+}
+
+/* Flexbox */
+.cib-flex {
+  display: flex;
+}
+
+.cib-items-center {
+  align-items: center;
+}
+
+.cib-gap-2 {
+  gap: 0.5rem;
+}
+
+.cib-gap-3 {
+  gap: 0.75rem;
+}
+
+/* List Styles */
+.cib-list-disc {
+  list-style: none;
+  padding: 0;
+}
+
+.cib-list-disc li::before {
+  content: "•";
+  color: #002B5B;
+  font-weight: bold;
+  display: inline-block;
+  width: 1em;
+  margin-left: -1em;
+}
+
+/* Warning/Alert Styles */
+.cib-warning-icon {
+  color: #B91C1C;
+  flex-shrink: 0;
+}
+
+.cib-warning-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #B91C1C;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Feature Card */
+.cib-feature-card {
+  padding: 1.5rem;
+  background: white;
+  border-radius: 1rem;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.cib-feature-card:hover {
+  border-color: #002B5B;
+  transform: translateY(-5px);
+  box-shadow: 0 10px 40px rgba(0, 43, 91, 0.15);
+}
+
+/* Officer Card */
+.cib-officer-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  transition: all 0.3s ease;
+}
+
+.cib-officer-card:hover {
+  border-color: #002B5B;
+  box-shadow: 0 8px 30px rgba(0, 43, 91, 0.1);
+}
+
+/* Officer Card Specific */
+.cib-officer-header {
+  display: flex;
+  gap: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.cib-officer-image-container {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.cib-officer-image {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #002B5B;
+}
+
+.cib-officer-image-ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px dashed #002B5B;
+  opacity: 0.3;
+}
+
+.cib-officer-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.cib-officer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.6rem;
+  background: linear-gradient(135deg, #002B5B 0%, #001a38 100%);
+  border-radius: 9999px;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.cib-name {
+  color: #1e293b;
+  font-weight: 800;
+  font-size: 1.125rem;
+  line-height: 1.3;
+}
+
+.cib-position {
+  color: #B91C1C;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.cib-message {
+  color: #475569;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  font-style: italic;
+}
+
+/* Stagger animation */
+.cib-stagger > * {
+  animation: fadeInUp 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+.cib-stagger > *:nth-child(1) { animation-delay: 0.1s; }
+.cib-stagger > *:nth-child(2) { animation-delay: 0.2s; }
+.cib-stagger > *:nth-child(3) { animation-delay: 0.3s; }
+.cib-stagger > *:nth-child(4) { animation-delay: 0.4s; }
+.cib-stagger > *:nth-child(5) { animation-delay: 0.5s; }
+.cib-stagger > *:nth-child(6) { animation-delay: 0.6s; }
+.cib-stagger > *:nth-child(7) { animation-delay: 0.7s; }
+.cib-stagger > *:nth-child(8) { animation-delay: 0.8s; }
+.cib-stagger > *:nth-child(9) { animation-delay: 0.9s; }
+
+/* H3 Title */
+.cib-h3-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #002B5B;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* Text Colors */
+.cib-text-gray-200 {
+  color: #334155;
+}
+
+.cib-text-sm {
+  font-size: 0.875rem;
+}
+
+.cib-leading-6 {
+  line-height: 1.5;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cib-animate-fade-in-up {
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+/* Stat Styles */
+.cib-stat {
+  text-align: center;
+  padding: 1rem;
+}
+
+@media (max-width: 640px) {
+  .cib-title {
+    font-size: 1.75rem;
+  }
+  
+  .cib-subtitle {
+    font-size: 1rem;
+  }
+  
+  .cib-card {
+    padding: 1.5rem;
+  }
+  
+  .cib-officer-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .cib-officer-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+/* Contact Form Styles */
+.cib-contact-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+}
+
+@media (max-width: 900px) {
+  .cib-contact-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cib-form-group {
+  margin-bottom: 1.25rem;
+}
+
+.cib-form-label {
+  display: block;
+  color: #1e293b;
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.cib-form-input,
+.cib-form-textarea {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  font-size: 0.95rem;
+  color: #1e293b;
+  background: #f8fafc;
+  transition: all 0.3s ease;
+}
+
+.cib-form-input:focus,
+.cib-form-textarea:focus {
+  outline: none;
+  border-color: #002B5B;
+  box-shadow: 0 0 0 3px rgba(0, 43, 91, 0.1);
+  background: white;
+}
+
+.cib-form-textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.cib-checkbox-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin: 1.5rem 0;
+}
+
+.cib-checkbox {
+  width: 20px;
+  height: 20px;
+  accent-color: #002B5B;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.cib-checkbox-label {
+  color: #64748b;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.cib-checkbox-label a {
+  color: #002B5B;
+  text-decoration: underline;
+}
+
+.cib-submit-btn {
+  width: 100%;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #002B5B 0%, #001a38 100%);
+  color: white;
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: none;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 14px rgba(0, 43, 91, 0.3);
+}
+
+.cib-submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 43, 91, 0.4);
+}
+
+.cib-contact-info-card {
+  background: linear-gradient(135deg, #002B5B 0%, #001a38 100%);
+  color: white;
+  border-radius: 1rem;
+  padding: 2rem;
+  height: fit-content;
+}
+
+.cib-contact-info-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.cib-contact-info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cib-contact-info-item:last-of-type {
+  border-bottom: none;
+  margin-bottom: 1rem;
+  padding-bottom: 0;
+}
+
+.cib-contact-icon {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cib-contact-details {
+  flex: 1;
+}
+
+.cib-contact-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.7;
+  margin-bottom: 0.25rem;
+}
+
+.cib-contact-value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.cib-org-description {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  opacity: 0.9;
+}
+
+.cib-social-links {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.cib-social-link {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.cib-social-link:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Donation Page Styles */
+.cib-donation-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+@media (max-width: 900px) {
+  .cib-donation-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cib-membership-card {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 1rem;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.cib-membership-card:hover {
+  border-color: #002B5B;
+  transform: translateY(-5px);
+  box-shadow: 0 10px 40px rgba(0, 43, 91, 0.15);
+}
+
+.cib-membership-card.featured {
+  border-color: #002B5B;
+  background: linear-gradient(135deg, #002B5B 0%, #001a38 100%);
+  color: white;
+}
+
+.cib-membership-card.featured:hover {
+  background: linear-gradient(135deg, #001a38 0%, #000d1a 100%);
+}
+
+.cib-membership-badge {
+  display: inline-block;
+  padding: 0.35rem 1rem;
+  background: #B91C1C;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border-radius: 9999px;
+  margin-bottom: 1rem;
+}
+
+.cib-membership-card.featured .cib-membership-badge {
+  background: white;
+  color: #002B5B;
+}
+
+.cib-membership-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+}
+
+.cib-membership-price {
+  font-size: 2.5rem;
+  font-weight: 900;
+  margin-bottom: 0.5rem;
+}
+
+.cib-membership-card.featured .cib-membership-price {
+  color: white;
+}
+
+.cib-membership-period {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  margin-bottom: 1.5rem;
+}
+
+.cib-membership-features {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+}
+
+.cib-membership-features li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.9rem;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cib-membership-card.featured .cib-membership-features li {
+  border-bottom-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.cib-bank-card {
+  background: linear-gradient(135deg, #002B5B 0%, #001a38 100%);
+  color: white;
+  border-radius: 1rem;
+  padding: 2rem;
+}
+
+.cib-bank-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.cib-bank-details {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.cib-bank-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cib-bank-row:last-child {
+  border-bottom: none;
+}
+
+.cib-bank-label {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.cib-bank-value {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.cib-notice-box {
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+}
+
+.cib-notice-box.warning {
+  background: #fee2e2;
+  border-color: #ef4444;
+}
+
+.cib-notice-title {
+  font-weight: 700;
+  color: #92400e;
+  font-size: 0.95rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cib-notice-box.warning .cib-notice-title {
+  color: #dc2626;
+}
+
+.cib-notice-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.cib-notice-list li {
+  padding: 0.4rem 0;
+  font-size: 0.875rem;
+  color: #78350f;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.cib-notice-box.warning .cib-notice-list li {
+  color: #991b1b;
+}
+
+.cib-donate-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem 2.5rem;
+  background: linear-gradient(135deg, #B91C1C 0%, #991b1b 100%);
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: none;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 14px rgba(185, 28, 28, 0.4);
+  width: 100%;
+  margin-top: 1.5rem;
+}
+
+.cib-donate-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(185, 28, 28, 0.5);
+}
