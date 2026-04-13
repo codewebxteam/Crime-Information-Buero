@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin, Facebook, Twitter, Instagram, Youtube, ShieldCheck, ExternalLink, ArrowRight } from 'lucide-react';
+import { 
+  Mail, Phone, MapPin, Facebook, Twitter, Instagram, 
+  Youtube, ShieldCheck, ExternalLink, ArrowRight, Shield 
+} from 'lucide-react';
 import { db } from '../../firebase/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import cibiLogo from '../../assets/logo.png';
@@ -32,7 +35,7 @@ const Footer = () => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   };
 
-  // 🔥 SOCIAL LINKS MAPPING
+  // SOCIAL LINKS MAPPING
   const socialMedia = [
     { Icon: Facebook, url: config.facebookUrl },
     { Icon: Twitter, url: config.twitterUrl },
@@ -45,6 +48,8 @@ const Footer = () => {
       <div className="absolute top-0 left-0 w-full h-full opacity-[0.02] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] hidden dark:block"></div>
 
       <div className="max-w-[1600px] mx-auto px-6 relative z-10">
+        
+        {/* Call to Action Section */}
         <div className="bg-[#f8f9fa] dark:bg-gradient-to-r dark:from-red-900/40 dark:to-black border border-gray-200 dark:border-white/10 p-8 md:p-12 rounded-[3rem] mb-20 flex flex-col lg:flex-row items-center justify-between gap-8 shadow-xl dark:shadow-2xl">
           <div className="space-y-3 text-center lg:text-left">
             <div className="inline-flex items-center gap-2 bg-red-700/10 text-red-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2">
@@ -68,6 +73,8 @@ const Footer = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+          
+          {/* Column 1: Brand Identity */}
           <div className="space-y-6">
             <div className="flex items-center gap-3">
               <img src={cibiLogo} alt="Logo" className="h-14 w-auto dark:grayscale dark:brightness-200" />
@@ -79,8 +86,6 @@ const Footer = () => {
             <p className="text-gray-600 dark:text-gray-400 text-xs font-bold leading-relaxed uppercase tracking-tight italic border-l-2 border-red-700 pl-3">
               "Working tirelessly since 2012 to eliminate corruption and crime through organizational unity and digital intelligence."
             </p>
-            
-            {/* 🔥 DYNAMIC SOCIAL MEDIA LINKS */}
             <div className="flex gap-4 mt-4">
               {socialMedia.map(({ Icon, url }, i) => (
                 <a 
@@ -96,6 +101,7 @@ const Footer = () => {
             </div>
           </div>
 
+          {/* Column 2: Portal Links & Highlighted Admin Login */}
           <div>
             <h4 className="text-red-600 font-black uppercase tracking-[0.3em] text-[11px] mb-8 border-b border-gray-200 dark:border-white/10 pb-3">Bureau Portal</h4>
             <ul className="space-y-4">
@@ -106,9 +112,37 @@ const Footer = () => {
                   </Link>
                 </li>
               ))}
+
+              {/* 🔥 HIGHLIGHTED ADMIN LOGIN LINK */}
+              <li className="pt-6 mt-2 border-t border-gray-100 dark:border-white/5">
+                <Link 
+                  to="/admin/login" 
+                  onClick={handleLinkClick} 
+                  className="group relative inline-flex items-center gap-3 px-4 py-2.5 rounded-2xl 
+                             bg-gray-50 dark:bg-white/5 border border-dashed border-gray-300 dark:border-white/10
+                             hover:border-red-700 hover:bg-red-700/5 transition-all duration-500 shadow-sm"
+                >
+                  <span className="absolute inset-0 bg-red-700/5 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></span>
+                  <div className="relative flex items-center gap-3">
+                    <div className="p-2 bg-white dark:bg-black rounded-xl shadow-sm group-hover:scale-110 transition-transform duration-300 border border-gray-100 dark:border-white/5">
+                      <Shield size={14} className="text-gray-400 group-hover:text-red-700 transition-colors" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 dark:text-gray-300 group-hover:text-red-700 transition-colors">
+                        Administrative
+                      </span>
+                      <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest opacity-60">
+                        Auth Access Only
+                      </span>
+                    </div>
+                  </div>
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-600 rounded-full animate-ping opacity-0 group-hover:opacity-75"></span>
+                </Link>
+              </li>
             </ul>
           </div>
 
+          {/* Column 3: Contact Details */}
           <div>
             <h4 className="text-red-600 font-black uppercase tracking-[0.3em] text-[11px] mb-8 border-b border-gray-200 dark:border-white/10 pb-3">Official Contact</h4>
             <ul className="space-y-6">
@@ -117,56 +151,46 @@ const Footer = () => {
                 <p className="text-gray-600 dark:text-gray-400 text-xs font-bold uppercase leading-relaxed">{config.contactAddress}</p>
               </li>
               <li className="flex items-center gap-4">
-                <Phone className="text-red-700 shrink-0" size={20} /><p className="text-gray-600 dark:text-gray-400 text-xs font-bold tracking-widest">{config.contactPhone}</p>
+                <Phone className="text-red-700 shrink-0" size={20} />
+                <p className="text-gray-600 dark:text-gray-400 text-xs font-bold tracking-widest">{config.contactPhone}</p>
               </li>
               <li className="flex items-center gap-4">
-                <Mail className="text-red-700 shrink-0" size={20} /><p className="text-gray-600 dark:text-gray-400 text-xs font-bold uppercase tracking-widest">{config.contactEmail}</p>
+                <Mail className="text-red-700 shrink-0" size={20} />
+                <p className="text-gray-600 dark:text-gray-400 text-xs font-bold uppercase tracking-widest">{config.contactEmail}</p>
               </li>
             </ul>
           </div>
 
+          {/* Column 4: Official Badge */}
           <div className="flex flex-col items-center lg:items-end">
             <div className="p-8 bg-[#f8f9fa] dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-[2rem] text-center space-y-4 w-full shadow-sm dark:shadow-none">
               <ShieldCheck size={48} className="text-red-700 mx-auto" />
               <h5 className="text-[10px] font-black uppercase tracking-widest leading-tight text-[#002B5B] dark:text-white">Official Criminal <br /> Information Provider</h5>
-              <div className="w-full h-1 bg-gray-200 dark:bg-red-700/20 rounded-full overflow-hidden"><div className="w-2/3 h-full bg-red-700"></div></div>
+              <div className="w-full h-1 bg-gray-200 dark:bg-red-700/20 rounded-full overflow-hidden">
+                <div className="w-2/3 h-full bg-red-700"></div>
+              </div>
               <p className="text-[8px] font-bold text-gray-400 dark:text-gray-500 uppercase italic">Registered NGO | Est. 2012</p>
             </div>
           </div>
         </div>
 
+        {/* Footer Bottom Bar */}
         <div className="border-t border-gray-200 dark:border-white/5 pt-10 flex flex-col md:flex-row justify-between items-center gap-6">
           <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest text-center md:text-left">
-            {config.footerText} <br /><span className="text-[8px] opacity-50 italic">Justice through Awareness & Information.</span>
+            {config.footerText} <br />
+            <span className="text-[8px] opacity-50 italic">Justice through Awareness & Information.</span>
           </p>
           <div className="flex flex-wrap justify-center gap-8">
-  {/* Contact Us */}
-  <Link 
-    to="/contact" 
-    onClick={handleLinkClick} 
-    className="text-gray-500 hover:text-red-700 dark:hover:text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-1 transition-colors"
-  >
-    Contact Us <ExternalLink size={12} />
-  </Link>
-
-  {}
-  <Link 
-    to="/about" 
-    onClick={handleLinkClick} 
-    className="text-gray-500 hover:text-red-700 dark:hover:text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-1 transition-colors"
-  >
-    Privacy Policy <ExternalLink size={12} />
-  </Link>
-
-  {}
-  <Link 
-    to="/about" 
-    onClick={handleLinkClick} 
-    className="text-gray-500 hover:text-red-700 dark:hover:text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-1 transition-colors"
-  >
-    Terms of Use <ExternalLink size={12} />
-  </Link>
-</div>
+            <Link to="/contact" onClick={handleLinkClick} className="text-gray-500 hover:text-red-700 dark:hover:text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-1 transition-colors">
+              Contact Us <ExternalLink size={12} />
+            </Link>
+            <Link to="/about" onClick={handleLinkClick} className="text-gray-500 hover:text-red-700 dark:hover:text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-1 transition-colors">
+              Privacy Policy <ExternalLink size={12} />
+            </Link>
+            <Link to="/about" onClick={handleLinkClick} className="text-gray-500 hover:text-red-700 dark:hover:text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-1 transition-colors">
+              Terms of Use <ExternalLink size={12} />
+            </Link>
+          </div>
         </div>
       </div>
     </footer>
