@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { useNavigate, useLocation, Navigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import {
   Shield,
   Lock,
@@ -32,38 +32,17 @@ import { useAuth } from "../context/AuthContext";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { refreshUser, setUserFromFirestore } = useAuth();
-
-  // Check if already logged in as anchor - redirect to dashboard
-  useEffect(() => {
-    const anchorAuth = localStorage.getItem('anchorAuth');
-    if (anchorAuth) {
-      const parsed = JSON.parse(anchorAuth);
-      if (parsed.role === 'anchor') {
-        navigate('/anchor/dashboard', { replace: true });
-      }
-    }
-  }, [navigate]);
 
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [loginType, setLoginType] = useState("admin");
+  const loginType = "member";
 
   const [formData, setFormData] = useState({
     email: "",
     password: ""
   });
-
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    if (params.get("type") === "member") {
-      setLoginType("member");
-    } else {
-      setLoginType("admin");
-    }
-  }, [location]);
 
   const handleInput = (e) => {
     setFormData((prev) => ({
@@ -73,18 +52,6 @@ const LoginPage = () => {
     setError("");
   };
 
-  const toggleLoginType = (type) => {
-    setLoginType(type);
-    setError("");
-    setFormData({ email: "", password: "" });
-
-    if (type === "admin") {
-      navigate("/login?type=admin", { replace: true });
-    } else {
-      navigate("/login?type=member", { replace: true });
-    }
-  };
-
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -92,45 +59,6 @@ const LoginPage = () => {
 
     try {
       let uid = null;
-
-      if (loginType === "admin") {
-        // Clear any previous session first
-        if (auth.currentUser) {
-          await signOut(auth);
-        }
-
-        const userCredential = await signInWithEmailAndPassword(
-          auth,
-          formData.email.trim(),
-          formData.password
-        );
-
-        uid = userCredential.user.uid;
-
-        const adminDoc = await getDoc(doc(db, "admins", uid));
-
-        if (!adminDoc.exists()) {
-          await signOut(auth);
-          throw new Error("Access denied. Admin credentials required.");
-        }
-
-        const adminData = adminDoc.data();
-        const role = adminData.role?.trim().toLowerCase().replace(/\s+/g, "_");
-
-        // Allow all admin roles: super_admin, national_admin, state_admin, district_admin
-        const allowedRoles = ["super_admin", "national_admin", "state_admin", "district_admin"];
-        if (!allowedRoles.includes(role)) {
-          await signOut(auth);
-          throw new Error("Access denied. Admin credentials required.");
-        }
-
-        await refreshUser();
-        // Small delay to ensure user state is set before navigation
-        setTimeout(() => {
-          navigate("/dashboard", { replace: true });
-        }, 100);
-        return;
-      }
 
       // MEMBER LOGIN
       // First check if user is an anchor - try Firebase sign in
@@ -276,6 +204,9 @@ const LoginPage = () => {
         throw new Error("Your account is inactive. Contact admin.");
       }
 
+      // Store member session in localStorage
+      localStorage.setItem("memberAuth", JSON.stringify({ ...memberData, uid, role: "member", isAdmin: false }));
+
       // Explicitly set member in auth context
       setUserFromFirestore({
         ...memberData,
@@ -325,46 +256,18 @@ const LoginPage = () => {
                 <Shield size={40} className="text-red-700" />
               </div>
 
-              <div className="flex justify-center gap-2 mb-6">
-                <button
-                  type="button"
-                  onClick={() => toggleLoginType("admin")}
-                  className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition-all ${
-                    loginType === "admin"
-                      ? "bg-[#002B5B] text-white"
-                      : "bg-gray-100 dark:bg-gray-800 text-gray-500"
-                  }`}
-                >
-                  Admin
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => toggleLoginType("member")}
-                  className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition-all ${
-                    loginType === "member"
-                      ? "bg-[#002B5B] text-white"
-                      : "bg-gray-100 dark:bg-gray-800 text-gray-500"
-                  }`}
-                >
-                  Member
-                </button>
-              </div>
-
               <div className="inline-flex items-center gap-2 bg-[#002B5B] text-white px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.4em] mb-4">
                 <BadgeCheck size={12} className="text-red-500" />
-                {loginType === "admin" ? "Administrative Access" : "Member Access"}
+                Member Access
               </div>
 
               <h2 className="text-3xl font-black text-[#002B5B] dark:text-white uppercase tracking-tighter">
-                {loginType === "admin" ? "Admin" : "Member"}{" "}
+                Member{" "}
                 <span className="text-red-700 italic">Login</span>
               </h2>
 
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">
-                {loginType === "admin"
-                  ? "Authorized Personnel Only"
-                  : "Approved Members Only"}
+                Approved Members Only
               </p>
             </div>
 
@@ -393,9 +296,7 @@ const LoginPage = () => {
                     onChange={handleInput}
                     required
                     className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-white/10 p-4 pl-12 rounded-2xl focus:border-red-700 transition-all outline-none text-sm font-bold text-[#002B5B] dark:text-white"
-                    placeholder={
-                      loginType === "admin" ? "Enter admin email" : "Enter member email"
-                    }
+                    placeholder="Enter member email"
                   />
                 </div>
               </div>
@@ -443,18 +344,16 @@ const LoginPage = () => {
                 )}
               </button>
 
-              {loginType === "member" && (
-                <div className="pt-4 text-center">
-                  <button
-                    type="button"
-                    onClick={() => navigate("/user")}
-                    className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center justify-center gap-2 mx-auto hover:text-red-700 transition-colors"
-                  >
-                    <ArrowRight size={12} />
-                    Apply for Membership
-                  </button>
-                </div>
-              )}
+              <div className="pt-4 text-center">
+                <button
+                  type="button"
+                  onClick={() => navigate("/user")}
+                  className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center justify-center gap-2 mx-auto hover:text-red-700 transition-colors"
+                >
+                  <ArrowRight size={12} />
+                  Apply for Membership
+                </button>
+              </div>
 
               <div className="pt-4 text-center">
                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest flex items-center justify-center gap-2">

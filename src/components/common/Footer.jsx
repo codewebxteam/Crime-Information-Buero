@@ -180,7 +180,7 @@ const Footer = () => {
             {config.footerText} <br />
             <span className="text-[8px] opacity-50 italic">Justice through Awareness & Information.</span>
           </p>
-          <div className="flex flex-wrap justify-center gap-8">
+          <div className="flex flex-wrap justify-center items-center gap-8">
             <Link to="/contact" onClick={handleLinkClick} className="text-gray-500 hover:text-red-700 dark:hover:text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-1 transition-colors">
               Contact Us <ExternalLink size={12} />
             </Link>
@@ -189,6 +189,9 @@ const Footer = () => {
             </Link>
             <Link to="/about" onClick={handleLinkClick} className="text-gray-500 hover:text-red-700 dark:hover:text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-1 transition-colors">
               Terms of Use <ExternalLink size={12} />
+            </Link>
+            <Link to="/admin/login" onClick={handleLinkClick} className="group inline-flex items-center gap-2 bg-[#002B5B] hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all duration-300 shadow-lg active:scale-95">
+              <Shield size={13} className="group-hover:rotate-12 transition-transform duration-300" /> Admin Portal
             </Link>
           </div>
         </div>

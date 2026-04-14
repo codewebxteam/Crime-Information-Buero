@@ -111,6 +111,17 @@ export function AuthProvider({ children }) {
       }
 
       if (!firebaseUser) {
+        const memberSession = localStorage.getItem("memberAuth");
+        if (memberSession) {
+          try {
+            const parsed = JSON.parse(memberSession);
+            if (parsed && parsed.role === "member") {
+              setUser({ ...parsed, isAdmin: false });
+              setLoading(false);
+              return;
+            }
+          } catch (_) { localStorage.removeItem("memberAuth"); }
+        }
         setUser(null);
       } else {
         // Fetch user role from Firestore

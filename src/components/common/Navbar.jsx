@@ -140,7 +140,7 @@ const Navbar = () => {
             </div>
           ) : (
             <Link 
-              to="/login" 
+              to="/login?type=member" 
               className="hidden lg:flex items-center gap-2 bg-[#002B5B] dark:bg-red-700 text-white text-[11px] font-black px-6 py-3 rounded-2xl hover:bg-black transition-all shadow-lg active:scale-95 uppercase"
             >
               <User size={14} /> Join
@@ -202,7 +202,7 @@ const Navbar = () => {
           ) : (
             <div className="flex flex-col gap-4">
               <Link 
-                to="/login" 
+                to="/login?type=member" 
                 onClick={() => setIsMobileMenuOpen(false)} 
                 className="w-full flex justify-center items-center gap-3 bg-[#002B5B] text-white py-4 rounded-xl font-black uppercase tracking-widest shadow-xl"
               >
