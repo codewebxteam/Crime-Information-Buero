@@ -16,11 +16,11 @@ import {
   X,
   CheckCircle,
 } from "lucide-react";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
+// Removed unused html2canvas and jsPDF imports to keep it clean
 
 import { db } from "../../firebase/firebase";
-import { collection, getDocs, query, where } from "firebase/firestore";
+// Added 'doc' and 'updateDoc' for the synchronization logic
+import { collection, getDocs, query, where, doc, updateDoc } from "firebase/firestore";
 import IdCardTemplate from "../../components/shared/IdCardTemplate";
 
 const AdminIdEngine = () => {
@@ -31,6 +31,8 @@ const AdminIdEngine = () => {
   const [selectedMemberId, setSelectedMemberId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
+  // Added state for success message
+  const [updateSuccess, setUpdateSuccess] = useState(false);
 
   const [member, setMember] = useState({
     name: "",
@@ -105,36 +107,34 @@ const AdminIdEngine = () => {
     setMember({ ...member, [e.target.name]: e.target.value });
   };
 
-  // --- Perfect PDF Export Logic ---
+  // --- UPDATED LOGIC: No PDF download, only Database Update ---
   const downloadCardPDF = async () => {
-    setIsProcessing(true);
-    try {
-      // Small delay to ensure modal and images are fully rendered
-      await new Promise((res) => setTimeout(res, 500));
+    if (!selectedMemberId) return;
 
-      const element = cardRef.current;
-      const canvas = await html2canvas(element, {
-        scale: 3, // Reduced from 4 to 3 to prevent rendering glitches
-        useCORS: true,
-        backgroundColor: "#ffffff",
-        logging: false,
-        onclone: (clonedDoc) => {
-          const styleTags = clonedDoc.querySelectorAll(
-            "style, link[rel='stylesheet']",
-          );
-          styleTags.forEach((tag) => tag.remove());
-        },
+    setIsProcessing(true);
+    setUpdateSuccess(false);
+
+    try {
+      // Reference to the specific member document
+      const memberDocRef = doc(db, "membershipApplications", selectedMemberId);
+      
+      // Update fields in Firestore
+      await updateDoc(memberDocRef, {
+        fullName: member.name,
+        designation: member.rank,
+        mobile: member.contact,
+        address: member.address,
       });
 
-      const imgData = canvas.toDataURL("image/png", 1.0);
+      // Show success message
+      setUpdateSuccess(true);
+      
+      // Optional: Auto-hide success message after 3 seconds
+      setTimeout(() => setUpdateSuccess(false), 3000);
 
-      // Standard CR80 ID Card dimensions (86mm x 54mm)
-      const pdf = new jsPDF("l", "mm", [86, 54]);
-      pdf.addImage(imgData, "PNG", 0, 0, 86, 54);
-      pdf.save(`CIB_Police_ID_${member.name.replace(/\s+/g, "_")}.pdf`);
     } catch (error) {
-      console.error("Error generating ID PDF:", error);
-      alert("Failed to generate PDF. Check console.");
+      console.error("Error updating member data:", error);
+      alert("Failed to update database. Check console.");
     } finally {
       setIsProcessing(false);
     }
@@ -325,7 +325,16 @@ const AdminIdEngine = () => {
                 <IdCardTemplate ref={cardRef} member={member} />
               </div>
 
-              <div className="px-8 py-6 bg-white dark:bg-[#0d0d0d] border-t border-gray-100 dark:border-white/10 flex justify-end gap-4">
+              <div className="px-8 py-6 bg-white dark:bg-[#0d0d0d] border-t border-gray-100 dark:border-white/10 flex flex-col sm:flex-row justify-end items-center gap-4">
+                {updateSuccess && (
+                  <motion.p 
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="text-green-600 font-bold text-xs uppercase"
+                  >
+                    Update Successful!
+                  </motion.p>
+                )}
                 <button
                   disabled={isProcessing}
                   onClick={downloadCardPDF}
@@ -335,7 +344,7 @@ const AdminIdEngine = () => {
                     <Loader2 size={16} className="animate-spin" />
                   ) : (
                     <>
-                      <Download size={16} /> Secure Export (PDF)
+                      <CheckCircle size={16} /> Update & Synchronize
                     </>
                   )}
                 </button>

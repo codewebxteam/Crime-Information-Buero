@@ -1,4 +1,4 @@
- import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -12,7 +12,9 @@ import {
   FileEdit,
   Newspaper,
   Users,
-  KeyRound
+  KeyRound,
+  Menu,
+  X
 } from "lucide-react";
 import logo from "../../assets/logo.png";
 
@@ -36,10 +38,8 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("id-gen");
   const [currentAdmin, setCurrentAdmin] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [firestoreError, setFirestoreError] = useState(null);
-
-  // ✅ Logout animation state
   const [showLogoutAnim, setShowLogoutAnim] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Mobile Menu State
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -57,109 +57,49 @@ const AdminDashboard = () => {
           setCurrentAdmin({
             uid: parsedAdmin.uid || firebaseUser.uid,
             email: parsedAdmin.email || firebaseUser.email || "",
-            name:
-              parsedAdmin.role === "super_admin"
-                ? "Super Admin"
-                : parsedAdmin.name || "Admin",
+            name: parsedAdmin.role === "super_admin" ? "Super Admin" : parsedAdmin.name || "Admin",
             role: parsedAdmin.role || "admin",
             status: parsedAdmin.status || "active",
             state: parsedAdmin.state || "",
             district: parsedAdmin.district || ""
           });
-        } else {
-          setCurrentAdmin({
-            uid: firebaseUser.uid,
-            email: firebaseUser.email || "",
-            name: "Admin",
-            role: "admin",
-            status: "active",
-            state: "",
-            district: ""
-          });
         }
 
         const adminSnap = await getDoc(doc(db, "admins", firebaseUser.uid));
-
         if (adminSnap.exists()) {
           const adminData = adminSnap.data();
-          const normalizedRole = adminData.role
-            ?.trim()
-            .toLowerCase()
-            .replace(/\s+/g, "_");
-
+          const normalizedRole = adminData.role?.trim().toLowerCase().replace(/\s+/g, "_");
           const finalAdmin = {
             uid: firebaseUser.uid,
             email: adminData.email || firebaseUser.email || "",
-            name:
-              normalizedRole === "super_admin"
-                ? "Super Admin"
-                : adminData.name || "Admin",
+            name: normalizedRole === "super_admin" ? "Super Admin" : adminData.name || "Admin",
             role: normalizedRole || "admin",
             status: adminData.status || "active",
             state: adminData.state || "",
             district: adminData.district || ""
           };
-
           setCurrentAdmin(finalAdmin);
           localStorage.setItem("adminAuth", JSON.stringify(finalAdmin));
-          setFirestoreError(null);
-        } else {
-          setFirestoreError("Admin record not found in database");
         }
       } catch (err) {
-        console.error("Admin dashboard error:", err);
-        setFirestoreError(err.message || "Failed to load admin data");
+        console.error(err);
       } finally {
         setLoading(false);
       }
     });
-
     return () => unsubscribe();
   }, [navigate]);
 
-  // ✅ Logout with animation
   const handleLogout = async () => {
     try {
       setShowLogoutAnim(true);
-
       setTimeout(async () => {
         localStorage.removeItem("adminAuth");
         await signOut(auth);
         navigate("/admin-login");
       }, 1800);
     } catch (e) {
-      console.error(e);
-      alert("Logout failed. Please try again.");
-    }
-  };
-
-  const getRoleBadgeColor = (role) => {
-    const colors = {
-      super_admin: "bg-red-600",
-      national_admin: "bg-blue-600",
-      state_admin: "bg-green-600",
-      district_admin: "bg-purple-600"
-    };
-    return colors[role] || "bg-gray-600";
-  };
-
-  const getRoleLabel = (role) => {
-    switch (role) {
-      case "super_admin": return "Super Admin";
-      case "national_admin": return "National Admin";
-      case "state_admin": return "State Admin";
-      case "district_admin": return "District Admin";
-      default: return "Admin";
-    }
-  };
-
-  const getAvatarText = (role) => {
-    switch (role) {
-      case "super_admin": return "SA";
-      case "national_admin": return "NA";
-      case "state_admin": return "ST";
-      case "district_admin": return "DA";
-      default: return "AD";
+      alert("Logout failed.");
     }
   };
 
@@ -175,116 +115,158 @@ const AdminDashboard = () => {
     { id: "site-config", label: "Site Config", icon: <Settings size={18} /> },
   ];
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f4f7f9]">
-        <Loader2 className="w-10 h-10 animate-spin text-red-700" />
-      </div>
-    );
-  }
-
-  if (!currentAdmin) return null;
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-[#f4f7f9]">
+      <Loader2 className="w-10 h-10 animate-spin text-red-700" />
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-[#f4f7f9] dark:bg-[#1e2128] flex flex-col lg:flex-row">
-
+    <div className="min-h-screen bg-[#f4f7f9] dark:bg-[#1e2128]">
       {/* Logout Animation */}
       <AnimatePresence>
         {showLogoutAnim && (
-          <motion.div
-            className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="text-center text-white"
-            >
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ repeat: Infinity, duration: 2 }}
-                className="w-16 h-16 mx-auto mb-6 border-4 border-red-600 border-t-transparent rounded-full"
-              />
+          <motion.div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+            <div className="text-center text-white">
+              <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2 }} className="w-16 h-16 mx-auto mb-6 border-4 border-red-600 border-t-transparent rounded-full" />
               <h2 className="text-2xl font-black uppercase">Thank You Admin</h2>
-              <p className="text-sm mt-2 text-gray-300">
-                Logging Out Securely...
-              </p>
-            </motion.div>
+              <p className="text-sm mt-2 text-gray-300">Logging Out Securely...</p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* SIDEBAR */}
-      <aside className="w-full lg:w-80 bg-[#002B5B] dark:bg-[#1e2128] text-white p-6 flex flex-col shadow-2xl">
+      {/* --- FULL NAVBAR --- */}
+      <header className="sticky top-0 z-50 w-full h-20 bg-[#002B5B] dark:bg-[#111317] border-b border-white/10 flex items-center justify-between px-6 lg:px-10 shadow-xl">
+        <div className="flex items-center gap-4">
+          {/* Hamburger Menu Trigger */}
+          <button 
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="lg:hidden text-white p-2 hover:bg-white/10 rounded-lg transition-colors"
+          >
+            <Menu size={24} />
+          </button>
 
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-6 border-b border-white/10 pb-6">
-          <img src={logo} className="h-12 w-12 bg-white p-1 rounded-xl" />
+          <img src={logo} className="h-10 w-10 bg-white p-1 rounded-lg hidden xs:block" alt="logo" />
           <div>
-            <h2 className="font-black uppercase text-lg italic">
+            <h2 className="font-black uppercase text-lg italic text-white leading-tight">
               Admin<span className="text-red-600">HQ</span>
             </h2>
-            <p className="text-[8px] text-gray-400 uppercase tracking-widest">
-              Control Panel
-            </p>
+            <p className="text-[7px] text-gray-400 uppercase tracking-[0.2em] hidden sm:block">Command Center</p>
           </div>
         </div>
 
-        {/* MENU */}
-        <nav className="flex-1 space-y-2">
-          {menuItems.map((item) => (
-            <SidebarLink
-              key={item.id}
-              active={activeTab === item.id}
-              onClick={() => setActiveTab(item.id)}
-              icon={item.icon}
-              label={item.label}
+        <div className="flex items-center gap-6">
+          <div className="hidden md:flex flex-col items-end">
+            <span className="text-[10px] font-bold text-white uppercase tracking-wider">{currentAdmin?.name}</span>
+            <span className="text-[9px] text-red-500 font-black uppercase">{currentAdmin?.role?.replace('_', ' ')}</span>
+          </div>
+
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-600 text-white font-black text-[10px] uppercase tracking-widest hover:bg-red-700 hover:scale-105 transition-all duration-300 shadow-lg shadow-red-900/20"
+          >
+            <LogOut size={14} />
+            <span className="hidden xs:inline">Logout</span>
+          </button>
+        </div>
+      </header>
+
+      {/* --- MOBILE SIDEBAR DRAWER --- */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] lg:hidden"
             />
-          ))}
-        </nav>
+            {/* Drawer */}
+            <motion.aside
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed top-0 left-0 h-full w-[280px] bg-[#002B5B] dark:bg-[#111317] z-[70] p-6 shadow-2xl lg:hidden overflow-y-auto"
+            >
+              <div className="flex justify-between items-center mb-10 border-b border-white/10 pb-6">
+                 <div className="flex items-center gap-3">
+                    <img src={logo} className="h-8 w-8 bg-white p-1 rounded-md" alt="logo" />
+                    <span className="text-white font-black italic">Admin<span className="text-red-600">HQ</span></span>
+                 </div>
+                 <button onClick={() => setIsMobileMenuOpen(false)} className="text-white/50 hover:text-white">
+                    <X size={24} />
+                 </button>
+              </div>
+              <nav className="space-y-2">
+                {menuItems.map((item) => (
+                  <SidebarLink 
+                    key={item.id} 
+                    active={activeTab === item.id} 
+                    onClick={() => {
+                      setActiveTab(item.id);
+                      setIsMobileMenuOpen(false);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }} 
+                    icon={item.icon} 
+                    label={item.label} 
+                  />
+                ))}
+              </nav>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
 
-        {/* 🔥 PREMIUM LOGOUT BUTTON */}
-        <button
-          onClick={handleLogout}
-          className="mt-4 relative overflow-hidden flex items-center justify-center gap-3 p-4 
-          rounded-2xl font-black text-[11px] uppercase tracking-widest 
-          border border-red-600/30 text-red-400 
-          bg-gradient-to-r from-red-600/10 via-red-500/5 to-transparent
-          hover:from-red-600 hover:to-red-700 hover:text-white 
-          hover:shadow-xl hover:shadow-red-700/30 
-          transition-all duration-300 group"
-        >
-          <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition duration-500 bg-red-700/10 blur-xl"></span>
+      {/* --- MAIN LAYOUT --- */}
+      <div className="flex flex-col lg:flex-row min-h-[calc(100vh-80px)]">
+        
+        {/* DESKTOP SIDEBAR (Hidden on mobile) */}
+        <aside className="hidden lg:flex w-80 bg-[#002B5B] dark:bg-[#111317] p-6 flex-col border-r border-white/5">
+          <nav className="space-y-2 sticky top-24">
+            {menuItems.map((item) => (
+              <SidebarLink 
+                key={item.id} 
+                active={activeTab === item.id} 
+                onClick={() => {
+                  setActiveTab(item.id);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }} 
+                icon={item.icon} 
+                label={item.label} 
+              />
+            ))}
+          </nav>
+        </aside>
 
-          <span className="transition-transform duration-300 group-hover:-translate-x-1">
-            <LogOut size={18} />
-          </span>
-
-          <span className="relative z-10">Secure Logout</span>
-
-          <span className="absolute right-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300">
-            →
-          </span>
-        </button>
-
-      </aside>
-
-      {/* MAIN */}
-      <main className="flex-1 p-6 lg:p-8 overflow-y-auto">
-        <AnimatePresence mode="wait">
-          {activeTab === "id-gen" && <AdminIdEngine />}
-          {activeTab === "anchors" && <AnchorManagement />}
-          {activeTab === "officers" && <OfficerManagement />}
-          {activeTab === "certificate" && <AdminCertificate />}
-          {activeTab === "status-track" && <AdminStatusTrack />}
-          {activeTab === "content" && <AdminContentManager />}
-          {activeTab === "news" && <AdminNewsManager adminUid={currentAdmin?.uid} />}
-          {activeTab === "change-password" && <AdminChangePassword />}
-          {activeTab === "site-config" && <AdminSiteConfig />}
-        </AnimatePresence>
-      </main>
+        {/* PAGE CONTENT */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-10">
+          <div className="max-w-7xl mx-auto">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                {activeTab === "id-gen" && <AdminIdEngine />}
+                {activeTab === "anchors" && <AnchorManagement />}
+                {activeTab === "officers" && <OfficerManagement />}
+                {activeTab === "certificate" && <AdminCertificate />}
+                {activeTab === "status-track" && <AdminStatusTrack />}
+                {activeTab === "content" && <AdminContentManager />}
+                {activeTab === "news" && <AdminNewsManager adminUid={currentAdmin?.uid} />}
+                {activeTab === "change-password" && <AdminChangePassword />}
+                {activeTab === "site-config" && <AdminSiteConfig />}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </main>
+      </div>
     </div>
   );
 };
