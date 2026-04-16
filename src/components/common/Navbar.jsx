@@ -15,6 +15,7 @@ const Navbar = () => {
   const location = useLocation();
   const [isCibOpen, setIsCibOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileServicesOpen, setIsMobileServicesOpen] = useState(false); // New state for mobile dropdown
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
 
@@ -48,7 +49,6 @@ const Navbar = () => {
     }
   };
 
-  // --- Services Dropdown (Added Contact here) ---
   const cibSubMenu = [
     { name: "About CIB", link: "/about", icon: <Shield size={14} /> },
     { name: "CIB Officer", link: "/officers", icon: <User size={14} /> },
@@ -56,7 +56,6 @@ const Navbar = () => {
     { name: "Legal Laws", link: "/laws", icon: <Gavel size={14} /> },
     { name: "Contact Us", link: "/contact", icon: <Mail size={14} /> },
     { name: "Membership", link: "/user", icon: <User size={14} /> },
-    
   ];
 
   return (
@@ -80,7 +79,6 @@ const Navbar = () => {
             <Home size={15} /> Home
           </Link>
 
-          {/* Services Dropdown */}
           <div className="relative" onMouseEnter={() => setIsCibOpen(true)} onMouseLeave={() => setIsCibOpen(false)}>
             <button className={`flex items-center gap-1.5 px-4 py-2 text-[13px] font-black uppercase tracking-widest rounded-xl transition-all ${isCibOpen ? 'bg-red-700 text-white shadow-md' : 'text-gray-700 dark:text-gray-200 hover:text-red-700'}`}>
               <Shield size={15} /> Services <ChevronDown size={14} className={`transition-transform duration-300 ${isCibOpen ? 'rotate-180' : ''}`} />
@@ -98,7 +96,6 @@ const Navbar = () => {
             <Newspaper size={15} /> News
           </Link>
           
-          {/* Gallery replaced Contact */}
           <Link to="/gallery" className={`flex items-center gap-1.5 px-4 py-2 text-[13px] font-black uppercase tracking-widest rounded-xl transition-all ${location.pathname === '/gallery' ? 'bg-red-700 text-white shadow-md' : 'text-gray-700 dark:text-gray-200 hover:text-red-700'}`}>
             <ImageIcon size={15} /> Gallery
           </Link>
@@ -159,20 +156,42 @@ const Navbar = () => {
 
       {/* 4. MOBILE MENU DRAWER */}
       <div className={`xl:hidden fixed inset-0 top-[70px] bg-[#f8f9fa] dark:bg-[#0f0f0f] z-[50] transition-all duration-500 ease-in-out transform ${isMobileMenuOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}>
-        <div className="flex flex-col p-8 gap-6 h-[calc(100vh-70px)] overflow-y-auto pb-20 font-sans">
+        <div className="flex flex-col p-8 gap-6 h-[calc(100vh-70px)] overflow-y-auto pb-24 font-sans">
           <Link onClick={() => setIsMobileMenuOpen(false)} to="/" className="flex items-center gap-4 text-xl font-black uppercase text-[#002B5B] dark:text-white border-b border-gray-200 dark:border-gray-800 pb-4">
             <Home /> Home
           </Link>
           
-          <div className="flex flex-col gap-4 border-b border-gray-200 dark:border-gray-800 pb-4">
-            <p className="flex items-center gap-4 text-xl font-black uppercase text-red-700">
-              <Shield /> Services
-            </p>
-            {cibSubMenu.map((sub, i) => (
-                <Link onClick={() => setIsMobileMenuOpen(false)} key={i} to={sub.link} className="pl-12 text-lg font-bold text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                  {sub.icon} {sub.name}
-                </Link>
-            ))}
+          {/* Mobile Dropdown for Services */}
+          <div className="flex flex-col border-b border-gray-200 dark:border-gray-800 pb-4">
+            <button 
+              onClick={() => setIsMobileServicesOpen(!isMobileServicesOpen)}
+              className="flex items-center justify-between w-full text-xl font-black uppercase text-red-700"
+            >
+              <span className="flex items-center gap-4"><Shield /> Services</span>
+              <ChevronDown className={`transition-transform duration-300 ${isMobileServicesOpen ? 'rotate-180' : ''}`} />
+            </button>
+            
+            <AnimatePresence>
+              {isMobileServicesOpen && (
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden flex flex-col gap-4 mt-4"
+                >
+                  {cibSubMenu.map((sub, i) => (
+                    <Link 
+                      onClick={() => setIsMobileMenuOpen(false)} 
+                      key={i} 
+                      to={sub.link} 
+                      className="pl-12 text-lg font-bold text-gray-600 dark:text-gray-400 flex items-center gap-2 hover:text-red-700 transition-colors"
+                    >
+                      {sub.icon} {sub.name}
+                    </Link>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           <Link onClick={() => setIsMobileMenuOpen(false)} to="/news" className="flex items-center gap-4 text-xl font-black uppercase text-[#002B5B] dark:text-white border-b border-gray-200 dark:border-gray-800 pb-4">
@@ -206,7 +225,7 @@ const Navbar = () => {
                 onClick={() => setIsMobileMenuOpen(false)} 
                 className="w-full flex justify-center items-center gap-3 bg-[#002B5B] text-white py-4 rounded-xl font-black uppercase tracking-widest shadow-xl"
               >
-                <User size={20} /> Bureau
+                <User size={20} /> Join
               </Link>
               <Link 
                 to="/donate" 
