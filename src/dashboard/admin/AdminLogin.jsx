@@ -113,7 +113,7 @@ const AdminLogin = () => {
               <div className="inline-flex items-center justify-center w-16 h-16 bg-red-800 rounded-2xl mb-4 shadow-xl shadow-red-900/20 transition-transform group-hover:scale-105">
                 <Lock className="text-white" size={28} />
               </div>
-              <h2 className="text-xl font-[1000] text-[#002B5B] dark:text-white uppercase tracking-tight italic">Bureau <span className="text-red-700">Auth</span></h2>
+              <h2 className="text-xl font-[1000] text-[#002B5B] dark:text-white uppercase tracking-tight italic">Bureau <span className="text-red-700">Login</span></h2>
               <p className="text-[8px] font-black text-gray-400 uppercase tracking-[0.3em] mt-1">Authorized Access Only</p>
             </div>
 
