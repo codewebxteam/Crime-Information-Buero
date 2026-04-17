@@ -411,7 +411,7 @@ const User = () => {
 
                         {/* Password */}
                         <div>
-                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Password *</label>
+                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Create New Password *</label>
                           <input
                             type="password"
                             name="password"
