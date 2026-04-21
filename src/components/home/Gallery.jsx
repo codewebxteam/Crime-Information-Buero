@@ -104,7 +104,6 @@ const Gallery = () => {
               transition={{ delay: 0.3, duration: 0.6 }}
               className="max-w-3xl"
             >
-              {/* Only Date (Red Badge Hata Diya Gaya Hai) */}
               <div className="flex items-center gap-3 mb-4">
                 <div className="flex items-center gap-2 text-white/70 text-[10px] font-bold uppercase tracking-widest">
                   <Calendar size={12} className="text-red-600" /> {currentSlide.date}
@@ -134,15 +133,7 @@ const Gallery = () => {
         </button>
       </div>
 
-      <div className="absolute bottom-0 left-0 w-full h-1 bg-white/10 z-50">
-        <motion.div
-          key={currentIndex}
-          initial={{ width: "0%" }}
-          animate={{ width: "100%" }}
-          transition={{ duration: 6, ease: "linear" }}
-          className="h-full bg-red-700"
-        />
-      </div>
+      {/* Line Progress Bar Hata Diya Gaya Hai yahan se */}
     </section>
   );
 };

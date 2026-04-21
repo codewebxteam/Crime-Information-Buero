@@ -4,22 +4,6 @@ import { db } from '../../firebase/firebase';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 
-// Fallback images for demo
-import babulalImg from '../../assets/kumawat.jpeg';
-import cdImg from '../../assets/cd.jpeg';
-import gautamImg from '../../assets/gautam.jpeg';
-import mayaImg from '../../assets/maya.jpeg';
-import team01Img from '../../assets/team01.jpeg';
-import team02Img from '../../assets/team02.jpeg';
-import ctaImg from '../../assets/cta.jpeg';
-import shakeelImg from '../../assets/shakeel.jpeg';
-import atikurImg from '../../assets/atikur.jpg';
-
-const fallbackImages = [
-  babulalImg, cdImg, gautamImg, mayaImg, 
-  team01Img, team02Img, ctaImg, shakeelImg, atikurImg
-];
-
 const fadeUp = {
   initial: { opacity: 0, y: 30 },
   whileInView: { opacity: 1, y: 0 },
@@ -39,12 +23,12 @@ const CIBOfficer = () => {
   const fetchOfficers = async () => {
     try {
       setLoading(true);
+      // Backend (Firebase) se data fetch karne ki query
       const q = query(collection(db, "officers"), orderBy("createdAt", "desc"));
       const snapshot = await getDocs(q);
       
       if (snapshot.empty) {
-        // If no officers in database, use fallback data
-        setOfficers(getFallbackOfficers());
+        setOfficers([]); // Agar backend mein koi officer nahi hai to array empty rahegi
       } else {
         const officerData = snapshot.docs.map(doc => ({
           id: doc.id,
@@ -55,71 +39,11 @@ const CIBOfficer = () => {
     } catch (err) {
       console.error("Error fetching officers:", err);
       setError(err.message);
-      // Fallback on error
-      setOfficers(getFallbackOfficers());
+      setOfficers([]);
     } finally {
       setLoading(false);
     }
   };
-
-  const getFallbackOfficers = () => [
-    {
-      name: "Babulal Kumawat",
-      position: "Organization Secretary",
-      department: "Organization Department",
-      image: babulalImg,
-      message: `As the Organization Secretary, my effort is to make CIB strong in every state. Our aim is to build a crime-free India. Jai Hind.`,
-      phone: "+91 98765 43210",
-    },
-    {
-      name: "C.D. Pandey",
-      position: "Assistant Secretary",
-      department: "Administration",
-      image: cdImg,
-      message: `As Assistant Secretary, I am trying to smoothly manage administrative functions. CIB's success is possible due to our dedicated workers.`,
-      phone: "+91 98765 43211",
-    },
-    {
-      name: "Gautam Ram",
-      position: "Central Incharge (Cyber Cell)",
-      department: "Cyber Cell",
-      image: gautamImg,
-      message: `As the incharge of Cyber Cell, I am working to prevent digital crimes and spread awareness. Cyber security is very important in today's era.`,
-      phone: "+91 98765 43212",
-    },
-    {
-      name: "Jivan Bhai",
-      position: "State Incharge Gujarat",
-      department: "State Operations",
-      image: team01Img,
-      message: `As State Incharge of Gujarat, I am working on CIB's expansion across 29 states. Building a crime-free society in Gujarat is our goal.`,
-      phone: "+91 98765 43214",
-    },
-    {
-      name: "Field Organizer",
-      position: "Field Operations (Maharashtra)",
-      department: "Field Operations",
-      image: team02Img,
-      message: `As Organizer of Field Operations, I am coordinating CIB's activities in Maharashtra. Social awareness is our strength.`,
-      phone: "+91 98765 43215",
-    },
-    {
-      name: "Chaudhary Tufail Ahmed",
-      position: "Organization Co-Incharge Assam",
-      department: "Organization Department",
-      image: ctaImg,
-      message: `As Organization Co-Incharge of Assam, I am strengthening CIB's organizational structure in the state. Coordination of all workers is the key to our success.`,
-      phone: "+91 98765 43216",
-    },
-    {
-      name: "Shakeel Adil",
-      position: "Discipline Secretary",
-      department: "Discipline & Ethics",
-      image: shakeelImg,
-      message: `As Discipline Secretary, I am strengthening the organization's disciplinary system. Transparency and honesty are our foundation.`,
-      phone: "+91 98765 43218",
-    }
-  ];
 
   if (loading) {
     return (
@@ -149,11 +73,11 @@ const CIBOfficer = () => {
             CIB <span className="text-red-700">Officers</span>
           </h2>
           <p className="text-gray-500 dark:text-gray-400 text-sm font-bold uppercase tracking-widest mt-4">
-            Dedicated Team Across 29 States
+            Dedicated Team Across 28 States
           </p>
         </motion.div>
 
-        {/* Officers Grid - Card Type with Circular Images */}
+        {/* Officers Grid - Only Backend Data */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {officers.map((officer, idx) => (
             <motion.div 
@@ -170,9 +94,6 @@ const CIBOfficer = () => {
                     src={officer.image} 
                     alt={officer.name}
                     className="w-full h-full object-cover rounded-full border-4 border-white dark:border-gray-800 shadow-lg group-hover:scale-105 transition-transform duration-300"
-                    onError={(e) => {
-                      e.target.src = fallbackImages[idx % fallbackImages.length];
-                    }}
                   />
                 ) : (
                   <div className="w-full h-full rounded-full bg-red-700 flex items-center justify-center text-white font-bold text-3xl border-4 border-white dark:border-gray-800">
