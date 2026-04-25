@@ -1,476 +1,174 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Activity,
-  RefreshCcw,
-  ChevronDown,
-  CheckCircle2,
-  Clock,
-  ShieldCheck,
-  Truck,
-  AlertCircle,
-  BadgeCheck,
-  XCircle,
-  User,
-  FileText,
-  Image,
-} from "lucide-react";
+import { Activity, RefreshCcw, CheckCircle2, ShieldCheck, BadgeCheck, XCircle } from "lucide-react";
 
-// Services
-import {
-  fetchAllApplications,
-  approveApplication,
-  rejectApplication,
-  updateApplicationTrackStatus,
+import StatCard from "../../components/admincomponents/StatCard";
+import MemberQueue from "../../components/admincomponents/MemberQueue";
+import ApplicantDetails from "../../components/admincomponents/ApplicantDetails";
+
+import { 
+  fetchAllApplications, 
+  approveApplication, 
+  rejectApplication, 
+  updateApplicationTrackStatus 
 } from "../../services/admin.service";
 
 const AdminStatusTrack = ({ adminUid = "", currentAdmin = null }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [trackStatus, setTrackStatus] = useState("Intelligence Verification");
-
   const [applications, setApplications] = useState([]);
-  const [selectedAppId, setSelectedAppId] = useState("");
+  const [selectedAppId, setSelectedAppId] = useState(""); // Ye ID action ke baad bhi bani rahegi
   const [isUpdating, setIsUpdating] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
-
-  const counters = useMemo(() => {
-    const total = applications.length;
-    const pending = applications.filter((a) => a.status === "Pending").length;
-    const approved = applications.filter((a) => a.status === "Approved").length;
-    const rejected = applications.filter((a) => a.status === "Rejected").length;
-    return { total, pending, approved, rejected };
-  }, [applications]);
+  const [filterType, setFilterType] = useState("Total");
 
   const statusOptions = [
     { label: "Request Received", icon: <CheckCircle2 size={16} />, color: "text-blue-500" },
     { label: "Intelligence Verification", icon: <ShieldCheck size={16} />, color: "text-yellow-500" },
-    { label: "ID Embossing Stage", icon: <Clock size={16} />, color: "text-purple-500" },
-    { label: "Approved & Dispatched", icon: <Truck size={16} />, color: "text-green-500" },
-    { label: "Request Rejected", icon: <AlertCircle size={16} />, color: "text-red-500" },
+    { label: "Approved", icon: <BadgeCheck size={16} />, color: "text-green-500" },
+    { label: "Rejected", icon: <XCircle size={16} />, color: "text-red-500" },
   ];
 
-  const selectedApplication = useMemo(
-    () => applications.find((a) => a.id === selectedAppId) || null,
-    [applications, selectedAppId]
-  );
+  const counters = useMemo(() => ({
+    total: applications.length,
+    pending: applications.filter(a => a.status === "Pending").length,
+    approved: applications.filter(a => a.status === "Approved").length,
+    rejected: applications.filter(a => a.status === "Rejected").length,
+  }), [applications]);
 
-  const loadApplications = async (keepSelectedId = "") => {
+  const filteredApps = useMemo(() => 
+    filterType === "Total" ? applications : applications.filter(a => a.status === filterType)
+  , [applications, filterType]);
+
+  const selectedApp = useMemo(() => 
+    applications.find(a => a.id === selectedAppId) || null
+  , [applications, selectedAppId]);
+
+  // --- FIX: loadApplications ab ID ko reset nahi karega ---
+  const loadApplications = async () => {
     try {
       const data = await fetchAllApplications();
       setApplications(data);
-
-      const preferredId = keepSelectedId || selectedAppId;
-
-      if (preferredId) {
-        const matched = data.find((item) => item.id === preferredId);
-        if (matched) {
-          setSelectedAppId(matched.id);
-          setTrackStatus(matched.trackStatus || "Intelligence Verification");
-          return;
-        }
-      }
-
-      if (data.length > 0) {
-        setSelectedAppId(data[0].id);
-        setTrackStatus(data[0].trackStatus || "Intelligence Verification");
-      } else {
-        setSelectedAppId("");
-        setTrackStatus("Intelligence Verification");
-      }
-    } catch (e) {
-      console.error(e);
-      alert("Applications fetch failed. Console check karo.");
+      // Yahan hum ID reset nahi kar rahe, toh selectedApp bana rahega
+    } catch (e) { 
+      console.error("Error loading applications:", e); 
     }
   };
 
-  useEffect(() => {
-    loadApplications();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { 
+    loadApplications(); 
   }, []);
 
-  const handleSelect = (label) => {
-    setTrackStatus(label);
-    setIsOpen(false);
-  };
-
-  const handleSelectApplication = (appId) => {
-    setSelectedAppId(appId);
-    const found = applications.find((a) => a.id === appId);
-    setTrackStatus(found?.trackStatus || "Intelligence Verification");
-  };
-
-  const updateLiveDatabase = async () => {
-    if (!selectedAppId) {
-      alert("Pehle application select karo");
-      return;
-    }
-
-    setIsUpdating(true);
-    try {
-      await updateApplicationTrackStatus(selectedAppId, trackStatus);
-      alert(`Tracking Updated: ${trackStatus}`);
-      await loadApplications(selectedAppId);
-    } catch (err) {
-      console.error(err);
-      alert("Update failed. Console check karo.");
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
   const handleApprove = async () => {
-    if (!selectedApplication) {
-      alert("Pehle application select karo");
-      return;
-    }
-
-    if (!adminUid) {
-      alert("Admin UID missing. Login again.");
-      return;
-    }
-
+    const finalAdminUid = adminUid || currentAdmin?.uid || currentAdmin?.id;
+    if (!selectedApp || !finalAdminUid) return;
+    
     setIsApproving(true);
-
     try {
-      const res = await approveApplication({
-        appId: selectedApplication.id,
-        adminUid,
-        applicant: selectedApplication,
-        currentAdmin,
+      const res = await approveApplication({ 
+        appId: selectedApp.id, 
+        adminUid: finalAdminUid, 
+        applicant: selectedApp 
       });
-
-      localStorage.setItem(
-        "cib_last_approved",
-        JSON.stringify({
-          appId: selectedApplication.id,
-          certificateId: res?.certificateId || "",
-          memberId: res?.memberId || "",
-          name: selectedApplication.fullName || selectedApplication.name || "",
-          level:
-            selectedApplication.membershipLabel ||
-            selectedApplication.levelRequested ||
-            selectedApplication.level ||
-            "",
-        })
-      );
-
-      alert(
-        `Approved!\nMemberId: ${res?.memberId || "Generated"}\nCertificate: ${
-          res?.certificateId || "Generated"
-        }`
-      );
-
-      await loadApplications(selectedApplication.id);
-    } catch (e) {
-      console.error(e);
-      alert("Approve failed. Console check karo.");
-    } finally {
-      setIsApproving(false);
+      alert(`Approved! Member ID: ${res?.memberId}`);
+      
+      // Card gayab na ho isliye hum sirf data reload karenge, ID wahi rahegi
+      await loadApplications(); 
+    } catch (e) { 
+      alert("Approval failed: " + e.message); 
+    } finally { 
+      setIsApproving(false); 
     }
   };
 
   const handleReject = async () => {
-    if (!selectedApplication) {
-      alert("Pehle application select karo");
-      return;
-    }
+    const finalAdminUid = adminUid || currentAdmin?.uid || currentAdmin?.id;
+    if (!selectedApp || !finalAdminUid) return;
 
-    if (!adminUid) {
-      alert("Admin UID missing. Login again.");
-      return;
-    }
+    const remarks = window.prompt("Reason for rejection:");
+    if (remarks === null) return;
 
-    const remarks = window.prompt("Reason / remarks (optional):", "");
     setIsRejecting(true);
-
     try {
-      await rejectApplication(selectedApplication.id, adminUid, remarks || "");
-      alert("Rejected!");
-      await loadApplications(selectedApplication.id);
-    } catch (e) {
-      console.error(e);
-      alert("Reject failed. Console check karo.");
-    } finally {
-      setIsRejecting(false);
+      await rejectApplication(selectedApp.id, finalAdminUid, remarks || "");
+      alert("Rejected.");
+      await loadApplications(); // reload data, keep ID
+    } catch (e) { 
+      alert("Rejection failed: " + e.message); 
+    } finally { 
+      setIsRejecting(false); 
+    }
+  };
+
+  const updateLiveDatabase = async () => {
+    if (!selectedAppId) return;
+    setIsUpdating(true);
+    try {
+      await updateApplicationTrackStatus(selectedAppId, trackStatus);
+      alert(`Updated: ${trackStatus}`);
+      await loadApplications();
+    } catch (err) { 
+      alert("Update failed."); 
+    } finally { 
+      setIsUpdating(false); 
     }
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white dark:bg-[#111] p-10 md:p-14 rounded-[3rem] shadow-2xl border border-gray-100 dark:border-white/5 text-center relative overflow-visible"
-      >
-        <div className="bg-red-700/10 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-8 border-b-4 border-red-700">
-          <Activity size={40} className="text-red-700" />
+    <div className="w-full min-h-screen bg-[#f8fafc] dark:bg-black p-4 md:p-8">
+      <div className="w-full bg-[#002B5B] p-8 rounded-[2rem] text-white shadow-lg mb-8 flex justify-between items-center">
+        <div>
+          <h2 className="text-3xl font-black uppercase italic text-white">Terminal <span className="text-red-500">Status</span></h2>
+          <p className="text-[10px] font-bold text-blue-200 uppercase tracking-widest">Master Control Panel</p>
         </div>
+        <button onClick={loadApplications} className="p-4 bg-white/10 hover:bg-white/20 rounded-2xl transition-all text-white">
+          <RefreshCcw size={24} className={isUpdating ? "animate-spin" : ""} />
+        </button>
+      </div>
 
-        <h3 className="text-3xl font-black text-[#002B5B] dark:text-white uppercase tracking-tighter italic mb-2">
-          Status <span className="text-red-700">Terminal</span>
-        </h3>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <StatCard label="Total" count={counters.total} color="text-blue-600" status="Total" activeFilter={filterType} onClick={setFilterType} />
+        <StatCard label="Pending" count={counters.pending} color="text-yellow-500" status="Pending" activeFilter={filterType} onClick={setFilterType} />
+        <StatCard label="Approved" count={counters.approved} color="text-green-600" status="Approved" activeFilter={filterType} onClick={setFilterType} />
+        <StatCard label="Rejected" count={counters.rejected} color="text-red-600" status="Rejected" activeFilter={filterType} onClick={setFilterType} />
+      </div>
 
-        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] mb-6">
-          Authorized Member Tracking System
-        </p>
-
-        <div className="grid grid-cols-4 gap-3 mb-8">
-          <div className="bg-[#002B5B] dark:bg-white/10 p-3 rounded-xl">
-            <p className="text-2xl font-black text-white">{counters.total}</p>
-            <p className="text-[8px] font-black text-gray-300 uppercase">Total</p>
-          </div>
-          <div className="bg-yellow-500 p-3 rounded-xl">
-            <p className="text-2xl font-black text-white">{counters.pending}</p>
-            <p className="text-[8px] font-black text-yellow-100 uppercase">Pending</p>
-          </div>
-          <div className="bg-green-600 p-3 rounded-xl">
-            <p className="text-2xl font-black text-white">{counters.approved}</p>
-            <p className="text-[8px] font-black text-green-100 uppercase">Approved</p>
-          </div>
-          <div className="bg-red-600 p-3 rounded-xl">
-            <p className="text-2xl font-black text-white">{counters.rejected}</p>
-            <p className="text-[8px] font-black text-red-100 uppercase">Rejected</p>
-          </div>
-        </div>
-
-        <div className="space-y-6 text-left relative">
-          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">
-            Select Applicant (Application)
-          </label>
-
-          <div className="relative">
-            <select
-              value={selectedAppId}
-              onChange={(e) => handleSelectApplication(e.target.value)}
-              className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-white/10 p-5 rounded-2xl text-sm font-bold text-[#002B5B] dark:text-white hover:border-red-700 transition-all shadow-inner"
-            >
-              {applications.length === 0 && <option value="">No applications found</option>}
-
-              {applications.map((app) => (
-                <option key={app.id} value={app.id}>
-                  {app.fullName || app.name || "Unnamed"} •{" "}
-                  {app.membershipLabel || app.levelRequested || app.level || "Level?"} •{" "}
-                  {app.status || "Pending"}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">
-            Select Tracking Step
-          </label>
-
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setIsOpen(!isOpen)}
-              className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-white/10 p-5 rounded-2xl flex items-center justify-between text-sm font-bold text-[#002B5B] dark:text-white hover:border-red-700 transition-all shadow-inner relative z-10"
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-red-700">
-                  {statusOptions.find((opt) => opt.label === trackStatus)?.icon}
-                </span>
-                {trackStatus}
-              </div>
-              <ChevronDown
-                size={18}
-                className={`transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
-              />
-            </button>
-
-            <AnimatePresence>
-              {isOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="absolute left-0 right-0 z-[999] mt-2 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] overflow-hidden"
-                >
-                  {statusOptions.map((option, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleSelect(option.label)}
-                      className="w-full flex items-center gap-4 px-6 py-4 hover:bg-gray-50 dark:hover:bg-white/10 transition-colors border-b border-gray-100 dark:border-white/5 last:border-none text-left"
-                    >
-                      <span className={option.color}>{option.icon}</span>
-                      <span className="text-[12px] font-black text-gray-600 dark:text-gray-300 uppercase tracking-tight">
-                        {option.label}
-                      </span>
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {selectedApplication && (
-            <div className="pt-6 border-t border-gray-200 dark:border-white/10">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2 mb-3 block">
-                Applicant Details
-              </label>
-
-              <div className="bg-gray-50 dark:bg-black p-4 rounded-2xl space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <p className="text-[9px] font-black text-gray-400 uppercase">Name</p>
-                    <p className="text-sm font-bold text-[#002B5B] dark:text-white">
-                      {selectedApplication.fullName || selectedApplication.name || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[9px] font-black text-gray-400 uppercase">Email</p>
-                    <p className="text-xs font-bold text-[#002B5B] dark:text-white">
-                      {selectedApplication.email || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[9px] font-black text-gray-400 uppercase">Phone</p>
-                    <p className="text-sm font-bold text-[#002B5B] dark:text-white">
-                      {selectedApplication.phone || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[9px] font-black text-gray-400 uppercase">Membership Level</p>
-                    <p className="text-sm font-bold text-red-700 uppercase">
-                      {selectedApplication.membershipLabel ||
-                        selectedApplication.levelRequested ||
-                        selectedApplication.membershipLevel ||
-                        "N/A"}
-                    </p>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="text-[9px] font-black text-gray-400 uppercase">Address</p>
-                    <p className="text-xs font-bold text-[#002B5B] dark:text-white">
-                      {selectedApplication.address || "N/A"},{" "}
-                      {selectedApplication.district || ""},{" "}
-                      {selectedApplication.state || ""}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-200 dark:border-white/10">
-                  <div>
-                    <p className="text-[9px] font-black text-gray-400 uppercase mb-2 flex items-center gap-1">
-                      <Image size={12} /> Photo
-                    </p>
-                    {selectedApplication.photoUrl ? (
-                      <div className="relative">
-                        <img
-                          src={selectedApplication.photoUrl}
-                          alt="Applicant Photo"
-                          className="w-20 h-20 object-cover rounded-xl border-2 border-[#002B5B]"
-                        />
-                        <a
-                          href={selectedApplication.photoUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="absolute -bottom-2 -right-2 bg-[#002B5B] text-white p-1 rounded-lg text-[8px] font-black uppercase"
-                        >
-                          View
-                        </a>
-                      </div>
-                    ) : (
-                      <div className="w-20 h-20 bg-gray-200 rounded-xl flex items-center justify-center">
-                        <User size={24} className="text-gray-400" />
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <p className="text-[9px] font-black text-gray-400 uppercase mb-2 flex items-center gap-1">
-                      <FileText size={12} /> KYC Document
-                    </p>
-                    {selectedApplication.kycUrl ? (
-                      <div className="relative">
-                        <img
-                          src={selectedApplication.kycUrl}
-                          alt="KYC Document"
-                          className="w-20 h-20 object-cover rounded-xl border-2 border-[#002B5B]"
-                          onError={(e) => {
-                            e.target.style.display = "none";
-                            if (e.target.nextSibling) {
-                              e.target.nextSibling.style.display = "flex";
-                            }
-                          }}
-                        />
-                        <div
-                          className="w-20 h-20 bg-gray-100 rounded-xl flex-col items-center justify-center hidden"
-                          style={{
-                            display: selectedApplication.kycUrl?.endsWith(".pdf")
-                              ? "flex"
-                              : "none",
-                          }}
-                        >
-                          <FileText size={24} className="text-red-600" />
-                          <span className="text-[8px] font-black text-gray-500">PDF</span>
-                        </div>
-                        <a
-                          href={selectedApplication.kycUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="absolute -bottom-2 -right-2 bg-[#002B5B] text-white p-1 rounded-lg text-[8px] font-black uppercase"
-                        >
-                          View
-                        </a>
-                      </div>
-                    ) : (
-                      <div className="w-20 h-20 bg-gray-200 rounded-xl flex items-center justify-center">
-                        <FileText size={24} className="text-gray-400" />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="pt-6">
-            <button
-              onClick={updateLiveDatabase}
-              disabled={isUpdating}
-              className="w-full bg-[#002B5B] hover:bg-red-700 disabled:opacity-60 text-white py-5 rounded-2xl font-black uppercase tracking-[0.3em] text-[11px] flex items-center justify-center gap-4 active:scale-95 transition-all shadow-xl border-b-4 border-black/20"
-            >
-              <RefreshCcw size={18} className={isUpdating ? "animate-spin" : ""} />
-              {isUpdating ? "Updating..." : "Update Tracking"}
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3">
-            <button
-              onClick={handleApprove}
-              disabled={isApproving || !selectedApplication}
-              className="w-full bg-green-700 hover:bg-green-800 disabled:opacity-60 text-white py-4 rounded-2xl font-black uppercase tracking-[0.25em] text-[10px] flex items-center justify-center gap-3 active:scale-95 transition-all shadow-xl"
-            >
-              <BadgeCheck size={18} className={isApproving ? "animate-pulse" : ""} />
-              {isApproving ? "Approving..." : "Approve"}
-            </button>
-
-            <button
-              onClick={handleReject}
-              disabled={isRejecting || !selectedApplication}
-              className="w-full bg-red-700 hover:bg-red-800 disabled:opacity-60 text-white py-4 rounded-2xl font-black uppercase tracking-[0.25em] text-[10px] flex items-center justify-center gap-3 active:scale-95 transition-all shadow-xl"
-            >
-              <XCircle size={18} className={isRejecting ? "animate-pulse" : ""} />
-              {isRejecting ? "Rejecting..." : "Reject"}
-            </button>
-          </div>
-
-          {selectedApplication && (
-            <div className="pt-4 text-[10px] font-bold text-gray-500 dark:text-gray-400">
-              Current Membership Status:{" "}
-              <span className="text-[#002B5B] dark:text-white">
-                {selectedApplication.status || "Pending"}
-              </span>
-              {selectedApplication.memberId ? (
-                <>
-                  {" "}• MemberId: <span className="text-red-700">{selectedApplication.memberId}</span>
-                </>
-              ) : null}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+        <MemberQueue 
+          applications={filteredApps} 
+          selectedId={selectedAppId} 
+          onSelect={(id) => { 
+            setSelectedAppId(id); 
+            const app = applications.find(a => a.id === id);
+            setTrackStatus(app?.trackStatus || "Intelligence Verification");
+          }} 
+          filterType={filterType} 
+        />
+        
+        <div className="xl:col-span-8">
+          {selectedApp ? (
+            <ApplicantDetails 
+              selectedApp={selectedApp} 
+              isApproving={isApproving} 
+              isRejecting={isRejecting} 
+              handleApprove={handleApprove} 
+              handleReject={handleReject}
+              isOpen={isOpen} 
+              setIsOpen={setIsOpen} 
+              trackStatus={trackStatus} 
+              setTrackStatus={setTrackStatus} 
+              statusOptions={statusOptions}
+              updateLiveDatabase={updateLiveDatabase} 
+              isUpdating={isUpdating}
+            />
+          ) : (
+            <div className="h-[520px] bg-white dark:bg-[#111] rounded-[2rem] flex flex-col items-center justify-center text-center p-10 border-2 border-dashed border-gray-200">
+               <Activity size={40} className="text-gray-300 mb-6" />
+               <h4 className="text-xl font-black text-[#002B5B] dark:text-white uppercase italic">Queue Waiting</h4>
             </div>
           )}
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 };

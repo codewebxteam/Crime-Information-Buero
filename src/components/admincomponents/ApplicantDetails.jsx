@@ -1,0 +1,148 @@
+import React from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { User, MapPin, FileText, ExternalLink, RefreshCcw, ChevronDown, CheckCircle, XCircle, CreditCard, ShieldCheck } from "lucide-react";
+
+const ApplicantDetails = ({ 
+  selectedApp, isApproving, isRejecting, handleApprove, handleReject,
+  isOpen, setIsOpen, trackStatus, setTrackStatus, statusOptions, 
+  updateLiveDatabase, isUpdating 
+}) => {
+  if (!selectedApp) return null;
+
+  // --- ORDER FIXED: Payment Pending ab Approved ke upar hai ---
+  const extendedStatusOptions = [
+    { label: "Request Received", icon: <CheckCircle size={16} />, color: "text-blue-500" },
+    { label: "Intelligence Verification", icon: <ShieldCheck size={16} />, color: "text-yellow-500" },
+    { label: "Payment Pending", icon: <CreditCard size={16} />, color: "text-orange-500" }, 
+    { label: "Approved", icon: <CheckCircle size={16} />, color: "text-green-500" },
+    { label: "Rejected", icon: <XCircle size={16} />, color: "text-red-500" },
+  ];
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }} 
+      animate={{ opacity: 1, y: 0 }} 
+      className="bg-white dark:bg-[#111] rounded-[2rem] shadow-2xl border border-gray-100 dark:border-white/5 overflow-visible"
+    >
+      {/* Top Profile Header */}
+      <div className="p-8 border-b border-gray-100 dark:border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="flex items-center gap-6">
+          <div className="w-24 h-24 rounded-2xl bg-gray-100 dark:bg-black overflow-hidden border-2 border-white dark:border-white/10 shadow-md">
+            {selectedApp.photoUrl ? (
+              <img src={selectedApp.photoUrl} alt="User" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-300">
+                <User size={40} />
+              </div>
+            )}
+          </div>
+          <div>
+            <h3 className="text-2xl font-black text-[#002B5B] dark:text-white uppercase leading-none">{selectedApp.fullName}</h3>
+            <p className="text-red-700 font-black text-[10px] uppercase tracking-[0.2em] mt-1">{selectedApp.membershipLabel}</p>
+            <p className="text-gray-400 text-[10px] font-bold flex items-center gap-1 mt-2">
+              <MapPin size={12} /> {selectedApp.district}, {selectedApp.state}
+            </p>
+          </div>
+        </div>
+
+        {/* Buttons */}
+        <div className="flex gap-4">
+          {selectedApp.status !== "Approved" && (
+            <button 
+              onClick={handleApprove} 
+              disabled={isApproving} 
+              className="px-8 py-4 bg-green-600 hover:bg-green-700 text-white rounded-xl text-[10px] font-black uppercase transition-all active:scale-95 shadow-lg disabled:opacity-50 flex items-center gap-2"
+            >
+              {isApproving ? <RefreshCcw size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+              {isApproving ? "Processing..." : "Approve"}
+            </button>
+          )}
+
+          <button 
+            onClick={handleReject} 
+            disabled={isRejecting} 
+            className="px-8 py-4 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[10px] font-black uppercase transition-all active:scale-95 shadow-lg disabled:opacity-50 flex items-center gap-2"
+          >
+            {isRejecting ? <RefreshCcw size={14} className="animate-spin" /> : <XCircle size={14} />}
+            {isRejecting ? "Processing..." : "Reject"}
+          </button>
+        </div>
+      </div>
+
+      <div className="p-8 lg:p-10 grid grid-cols-1 lg:grid-cols-2 gap-10 overflow-visible">
+        {/* Info side */}
+        <div className="space-y-6">
+          <div className="p-6 bg-gray-50 dark:bg-black rounded-2xl border border-gray-100 dark:border-white/5 space-y-4">
+            <div>
+              <p className="text-[9px] font-black text-gray-400 uppercase">Contact Email</p>
+              <p className="text-xs font-bold text-[#002B5B] dark:text-white truncate">{selectedApp.email}</p>
+            </div>
+            <div>
+              <p className="text-[9px] font-black text-gray-400 uppercase">Phone Number</p>
+              <p className="text-xs font-bold text-[#002B5B] dark:text-white">{selectedApp.phone}</p>
+            </div>
+          </div>
+          <div className="flex items-center justify-between p-5 bg-white dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm">
+            <div className="flex items-center gap-3 text-blue-600">
+              <FileText size={20} />
+              <span className="text-[10px] font-black uppercase tracking-widest">KYC Identity Proof</span>
+            </div>
+            <a href={selectedApp.kycUrl} target="_blank" rel="noreferrer" className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-600">
+              <ExternalLink size={16} />
+            </a>
+          </div>
+        </div>
+
+        {/* Dropdown side */}
+        <div className="space-y-4 relative z-50">
+          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Update Live Status</label>
+          <div className="relative overflow-visible">
+            <button 
+              onClick={() => setIsOpen(!isOpen)} 
+              className="w-full p-5 bg-white dark:bg-black border-2 border-gray-100 dark:border-white/10 rounded-2xl flex items-center justify-between text-xs font-black uppercase text-[#002B5B] dark:text-white shadow-sm"
+            >
+              <div className="flex items-center gap-3">
+                {extendedStatusOptions.find(o => o.label === trackStatus)?.icon || <RefreshCcw size={16} />}
+                {trackStatus}
+              </div>
+              <ChevronDown size={18} className={`transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
+            </button>
+
+            <AnimatePresence>
+              {isOpen && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  exit={{ opacity: 0, y: 10 }} 
+                  className="absolute left-0 right-0 z-[100] mt-2 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden p-2"
+                >
+                  {extendedStatusOptions.map((opt) => (
+                    <button 
+                      key={opt.label} 
+                      onClick={() => { setTrackStatus(opt.label); setIsOpen(false); }} 
+                      className="w-full p-4 flex items-center gap-4 hover:bg-gray-100 dark:hover:bg-white/5 rounded-xl transition-all text-left"
+                    >
+                      <span className={opt.color}>{opt.icon}</span>
+                      <span className="text-[10px] font-black uppercase text-gray-600 dark:text-gray-300">{opt.label}</span>
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <button 
+            onClick={updateLiveDatabase} 
+            disabled={isUpdating} 
+            className="w-full py-5 bg-[#002B5B] hover:bg-black text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] shadow-xl flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
+          >
+            <RefreshCcw size={18} className={isUpdating ? "animate-spin" : ""} />
+            {isUpdating ? "Processing..." : "Commit Status Change"}
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+export default ApplicantDetails;

@@ -14,29 +14,32 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 
-/* -------------------- ID helpers -------------------- */
-function pad4(n) {
-  return String(n).padStart(4, "0");
+/* -------------------- ID Helpers -------------------- */
+
+// Updated: 5 digits handle karne ke liye pad5 function
+function pad5(n) {
+  return String(n).padStart(5, "0");
 }
 
 function makeMemberId(counter) {
   const year = new Date().getFullYear();
-  return `CIB-${year}-${pad4(counter)}`;
+  // Example Result: CIB-2026-90350
+  return `CIB-${year}-${pad5(counter)}`;
 }
 
 function makeCertificateId(counter) {
   const year = new Date().getFullYear();
-  return `CERT-${year}-${pad4(counter)}`;
+  // Certificate ID ko bhi uniform rakhne ke liye pad5 use kar rahe hain
+  return `CERT-${year}-${pad5(counter)}`;
 }
 
-/* -------------------- READ: Applications -------------------- */
+/* -------------------- READ Functions -------------------- */
 
 export async function fetchAllApplications() {
   const q = query(
     collection(db, "membershipApplications"),
     orderBy("submittedAt", "desc")
   );
-
   const snap = await getDocs(q);
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
@@ -47,214 +50,158 @@ export async function fetchPendingApplications() {
     where("status", "==", "Pending"),
     orderBy("submittedAt", "desc")
   );
-
   const snap = await getDocs(q);
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
 
-export async function fetchApplicationById(appId) {
-  const ref = doc(db, "membershipApplications", appId);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) return null;
-  return { id: snap.id, ...snap.data() };
+/* -------------------- WRITE Functions -------------------- */
+
+export async function approveApplication({ appId, adminUid, applicant }) {
+  if (!appId || !adminUid) throw new Error("Missing appId or adminUid");
+
+  const applicantName = applicant?.fullName || applicant?.name || "Member";
+  const email = applicant?.email;
+  const password = "CIB" + appId.substring(0, 6);
+
+  const appRef = doc(db, "membershipApplications", appId);
+
+  try {
+    const result = await runTransaction(db, async (tx) => {
+      // Path: settings (small) -> App (Capital)
+      let settingsRef = doc(db, "settings", "App");
+      let settingsSnap = await tx.get(settingsRef);
+
+      if (!settingsSnap.exists()) {
+        settingsRef = doc(db, "settings", "app");
+        settingsSnap = await tx.get(settingsRef);
+      }
+
+      if (!settingsSnap.exists()) {
+        throw new Error("Settings document 'App' not found in Firestore.");
+      }
+
+      const s = settingsSnap.data();
+      
+      // Counters calculation
+      const nextMemberCounter = Number(s.lastMemberIdCounter || 0) + 1;
+      const nextCertCounter = Number(s.lastCertificateIdCounter || 0) + 1;
+
+      const memberId = makeMemberId(nextMemberCounter);
+      const certificateId = makeCertificateId(nextCertCounter);
+
+      // 1. Update Settings Counters
+      tx.update(settingsRef, {
+        lastMemberIdCounter: nextMemberCounter,
+        lastCertificateIdCounter: nextCertCounter,
+        updatedAt: serverTimestamp(),
+      });
+
+      // 2. Update Application Record
+      tx.update(appRef, {
+        status: "Approved",
+        memberId,
+        certificateId,
+        approvedBy: adminUid,
+        approvedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        remarks: "" 
+      });
+
+      // 3. Create Certificate Entry
+      const certRef = doc(db, "certificates", certificateId);
+      tx.set(certRef, {
+        certificateId,
+        memberId,
+        appId,
+        userId: applicant.userId || appId,
+        name: applicantName,
+        level: applicant.membershipLevel || applicant.levelRequested || "Standard",
+        issuedAt: serverTimestamp(),
+        issuedBy: adminUid,
+        certificateUrl: "",
+      });
+
+      return { memberId, certificateId };
+    });
+
+    // Handle User Creation in Secondary Auth
+    let newUid = appId;
+    try {
+      const userCred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+      newUid = userCred.user.uid;
+      await signOut(secondaryAuth);
+    } catch (e) {
+      console.warn("Auth creation skipped/failed:", e.message);
+    }
+
+    await updateDoc(appRef, { uid: newUid });
+
+    // Create User Document
+    await setDoc(doc(db, "users", newUid), {
+      uid: newUid,
+      email,
+      name: applicantName,
+      role: "member",
+      status: "active",
+      memberId: result.memberId,
+      certificateId: result.certificateId,
+      applicationId: appId,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+
+    return result;
+  } catch (error) {
+    console.error("Approve Transaction Failed:", error);
+    throw error;
+  }
 }
 
-export async function fetchApplicationsByUserId(userId) {
-  const q = query(
-    collection(db, "membershipApplications"),
-    where("userId", "==", userId),
-    orderBy("submittedAt", "desc")
-  );
+export async function rejectApplication(appId, adminUid, remarks = "") {
+  if (!appId || !adminUid) throw new Error("Missing appId or adminUid");
+  const appRef = doc(db, "membershipApplications", appId);
 
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  await updateDoc(appRef, {
+    status: "Rejected",
+    remarks: remarks,
+    rejectedBy: adminUid,
+    rejectedAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
 }
-
-/* -------------------- WRITE: Tracking status -------------------- */
 
 export async function updateApplicationTrackStatus(appId, trackStatus) {
   if (!appId) throw new Error("appId missing");
-
   await updateDoc(doc(db, "membershipApplications", appId), {
     trackStatus,
     updatedAt: serverTimestamp(),
   });
 }
 
-/* -------------------- WRITE: Approve / Reject -------------------- */
+export async function updateCertificateUrl({ appId, certificateId, url }) {
+  if (!appId || !certificateId || !url) throw new Error("Missing required fields");
 
-export async function approveApplication({ appId, adminUid, applicant }) {
-  if (!appId) throw new Error("appId missing");
-  if (!adminUid) throw new Error("adminUid missing");
-
-  const applicantName = applicant?.fullName || applicant?.name;
-  if (!applicantName) throw new Error("applicant.name or fullName missing");
-  if (!applicant?.email) throw new Error("applicant.email missing");
-
-  let password = "";
-  if (applicant.tempPasswordHash) {
-    try {
-      password = atob(applicant.tempPasswordHash);
-    } catch (e) {
-      console.warn("Could not decode tempPasswordHash, using fallback password");
-      password = "CIB" + appId.substring(0, 6);
-    }
-  } else {
-    password = "CIB" + appId.substring(0, 6);
-  }
-
-  const settingsRef = doc(db, "settings", "app");
-  const appRef = doc(db, "membershipApplications", appId);
-
-  const result = await runTransaction(db, async (tx) => {
-    const settingsSnap = await tx.get(settingsRef);
-
-    if (!settingsSnap.exists()) {
-      throw new Error("settings/app document is missing");
-    }
-
-    const s = settingsSnap.data();
-
-    const nextMemberCounter = Number(s.lastMemberCounter || 0) + 1;
-    const nextCertCounter = Number(s.lastCertificateCounter || 0) + 1;
-
-    const memberId = makeMemberId(nextMemberCounter);
-    const certificateId = makeCertificateId(nextCertCounter);
-
-    tx.update(settingsRef, {
-      lastMemberCounter: nextMemberCounter,
-      lastCertificateCounter: nextCertCounter,
-      updatedAt: serverTimestamp(),
-    });
-
-    tx.update(appRef, {
-      status: "Approved",
-      memberId,
-      certificateId,
-      certificateUrl: "",
-      remarks: "",
-      approvedBy: adminUid,
-      approvedAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-      uid: "",
-    });
-
-    const certRef = doc(db, "certificates", certificateId);
-    tx.set(certRef, {
-      certificateId,
-      memberId,
-      appId,
-      userId: applicant.userId || appId,
-      name: applicantName,
-      level:
-        applicant.levelRequested ||
-        applicant.membershipLevel ||
-        applicant.level ||
-        "",
-      certificateUrl: "",
-      issuedAt: serverTimestamp(),
-      issuedBy: adminUid,
-    });
-
-    return { memberId, certificateId };
+  await updateDoc(doc(db, "certificates", certificateId), {
+    certificateUrl: url,
+    updatedAt: serverTimestamp(),
   });
 
-  let newUid = "";
-
-  try {
-    // Secondary auth use kar rahe hain, isliye super admin session change nahi hoga
-    const userCredential = await createUserWithEmailAndPassword(
-      secondaryAuth,
-      applicant.email,
-      password
-    );
-
-    newUid = userCredential.user.uid;
-
-    await updateDoc(appRef, {
-      uid: newUid,
-      updatedAt: serverTimestamp(),
-    });
-
-    // Secondary created session ko immediately logout
-    await signOut(secondaryAuth);
-  } catch (authError) {
-    if (authError.code === "auth/email-already-in-use") {
-      console.log("User already exists in Firebase Auth:", applicant.email);
-      newUid = appId;
-    } else {
-      console.warn("Firebase Auth create failed:", authError.message);
-      newUid = appId;
-    }
-
-    await updateDoc(appRef, {
-      uid: newUid,
-      updatedAt: serverTimestamp(),
-    });
-  }
-
-  try {
-    await setDoc(doc(db, "users", newUid), {
-      uid: newUid,
-      email: applicant.email,
-      name: applicantName,
-      phone: applicant.phone || "",
-      address: applicant.address || "",
-      state: applicant.state || "",
-      district: applicant.district || "",
-      role: "member",
-      status: "active",
-      memberId: result.memberId,
-      certificateId: result.certificateId,
-      photoUrl: applicant.photoUrl || "",
-      applicationId: appId,
-      idCardUrl: "",
-      certificateUrl: "",
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-
-    console.log("User created in users collection:", applicant.email);
-  } catch (userError) {
-    console.error("Error creating user document:", userError);
-  }
-
-  return result;
-}
-
-export async function rejectApplication(appId, adminUid, remarks = "") {
-  if (!appId) throw new Error("appId missing");
-  if (!adminUid) throw new Error("adminUid missing");
-
   await updateDoc(doc(db, "membershipApplications", appId), {
-    status: "Rejected",
-    remarks,
-    approvedBy: adminUid,
-    approvedAt: serverTimestamp(),
+    certificateUrl: url,
     updatedAt: serverTimestamp(),
   });
 }
 
 export async function setApplicationDecisionStatus(appId, status) {
   if (!appId) throw new Error("appId missing");
-
   await updateDoc(doc(db, "membershipApplications", appId), {
     status,
     updatedAt: serverTimestamp(),
   });
 }
 
-export async function updateCertificateUrl({ appId, certificateId, url }) {
-  if (!appId) throw new Error("appId missing");
-  if (!certificateId) throw new Error("certificateId missing");
-  if (!url) throw new Error("url missing");
-
-  await updateDoc(doc(db, "certificates", certificateId), {
-    certificateUrl: url,
-  });
-
-  await updateDoc(doc(db, "membershipApplications", appId), {
-    certificateUrl: url,
-    updatedAt: serverTimestamp(),
-  });
+export async function fetchApplicationById(appId) {
+  const ref = doc(db, "membershipApplications", appId);
+  const snap = await getDoc(ref);
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 }
