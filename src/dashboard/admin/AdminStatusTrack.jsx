@@ -16,7 +16,7 @@ const AdminStatusTrack = ({ adminUid = "", currentAdmin = null }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [trackStatus, setTrackStatus] = useState("Intelligence Verification");
   const [applications, setApplications] = useState([]);
-  const [selectedAppId, setSelectedAppId] = useState(""); // Ye ID action ke baad bhi bani rahegi
+  const [selectedAppId, setSelectedAppId] = useState(""); 
   const [isUpdating, setIsUpdating] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
@@ -44,12 +44,10 @@ const AdminStatusTrack = ({ adminUid = "", currentAdmin = null }) => {
     applications.find(a => a.id === selectedAppId) || null
   , [applications, selectedAppId]);
 
-  // --- FIX: loadApplications ab ID ko reset nahi karega ---
   const loadApplications = async () => {
     try {
       const data = await fetchAllApplications();
       setApplications(data);
-      // Yahan hum ID reset nahi kar rahe, toh selectedApp bana rahega
     } catch (e) { 
       console.error("Error loading applications:", e); 
     }
@@ -71,8 +69,6 @@ const AdminStatusTrack = ({ adminUid = "", currentAdmin = null }) => {
         applicant: selectedApp 
       });
       alert(`Approved! Member ID: ${res?.memberId}`);
-      
-      // Card gayab na ho isliye hum sirf data reload karenge, ID wahi rahegi
       await loadApplications(); 
     } catch (e) { 
       alert("Approval failed: " + e.message); 
@@ -92,7 +88,7 @@ const AdminStatusTrack = ({ adminUid = "", currentAdmin = null }) => {
     try {
       await rejectApplication(selectedApp.id, finalAdminUid, remarks || "");
       alert("Rejected.");
-      await loadApplications(); // reload data, keep ID
+      await loadApplications(); 
     } catch (e) { 
       alert("Rejection failed: " + e.message); 
     } finally { 
@@ -115,36 +111,46 @@ const AdminStatusTrack = ({ adminUid = "", currentAdmin = null }) => {
   };
 
   return (
-    <div className="w-full min-h-screen bg-[#f8fafc] dark:bg-black p-4 md:p-8">
-      <div className="w-full bg-[#002B5B] p-8 rounded-[2rem] text-white shadow-lg mb-8 flex justify-between items-center">
+    <div className="w-full min-h-screen bg-[#f8fafc] dark:bg-black p-3 sm:p-6 lg:p-8">
+      {/* Header - Optimized for mobile wrap */}
+      <div className="w-full bg-[#002B5B] p-6 sm:p-8 rounded-2xl sm:rounded-[2rem] text-white shadow-lg mb-6 sm:mb-8 flex flex-row justify-between items-center gap-4">
         <div>
-          <h2 className="text-3xl font-black uppercase italic text-white">Terminal <span className="text-red-500">Status</span></h2>
-          <p className="text-[10px] font-bold text-blue-200 uppercase tracking-widest">Master Control Panel</p>
+          <h2 className="text-xl sm:text-3xl font-black uppercase italic text-white leading-none">Terminal <span className="text-red-500">Status</span></h2>
+          <p className="text-[8px] sm:text-[10px] font-bold text-blue-200 uppercase tracking-widest mt-2">Master Control Panel</p>
         </div>
-        <button onClick={loadApplications} className="p-4 bg-white/10 hover:bg-white/20 rounded-2xl transition-all text-white">
-          <RefreshCcw size={24} className={isUpdating ? "animate-spin" : ""} />
+        <button 
+          onClick={loadApplications} 
+          className="p-3 sm:p-4 bg-white/10 hover:bg-white/20 rounded-xl sm:rounded-2xl transition-all text-white shrink-0"
+        >
+          <RefreshCcw size={20} className={`${isUpdating ? "animate-spin" : ""}`} />
         </button>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {/* Stats Grid - 2 columns on mobile, 4 on desktop */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
         <StatCard label="Total" count={counters.total} color="text-blue-600" status="Total" activeFilter={filterType} onClick={setFilterType} />
         <StatCard label="Pending" count={counters.pending} color="text-yellow-500" status="Pending" activeFilter={filterType} onClick={setFilterType} />
         <StatCard label="Approved" count={counters.approved} color="text-green-600" status="Approved" activeFilter={filterType} onClick={setFilterType} />
         <StatCard label="Rejected" count={counters.rejected} color="text-red-600" status="Rejected" activeFilter={filterType} onClick={setFilterType} />
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-        <MemberQueue 
-          applications={filteredApps} 
-          selectedId={selectedAppId} 
-          onSelect={(id) => { 
-            setSelectedAppId(id); 
-            const app = applications.find(a => a.id === id);
-            setTrackStatus(app?.trackStatus || "Intelligence Verification");
-          }} 
-          filterType={filterType} 
-        />
+      {/* Main Terminal Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 sm:gap-8">
+        {/* Queue Section */}
+        <div className="xl:col-span-4">
+          <MemberQueue 
+            applications={filteredApps} 
+            selectedId={selectedAppId} 
+            onSelect={(id) => { 
+              setSelectedAppId(id); 
+              const app = applications.find(a => a.id === id);
+              setTrackStatus(app?.trackStatus || "Intelligence Verification");
+            }} 
+            filterType={filterType} 
+          />
+        </div>
         
+        {/* Detail Section */}
         <div className="xl:col-span-8">
           {selectedApp ? (
             <ApplicantDetails 
@@ -162,9 +168,10 @@ const AdminStatusTrack = ({ adminUid = "", currentAdmin = null }) => {
               isUpdating={isUpdating}
             />
           ) : (
-            <div className="h-[520px] bg-white dark:bg-[#111] rounded-[2rem] flex flex-col items-center justify-center text-center p-10 border-2 border-dashed border-gray-200">
-               <Activity size={40} className="text-gray-300 mb-6" />
-               <h4 className="text-xl font-black text-[#002B5B] dark:text-white uppercase italic">Queue Waiting</h4>
+            <div className="h-[300px] sm:h-[520px] bg-white dark:bg-[#111] rounded-2xl sm:rounded-[2rem] flex flex-col items-center justify-center text-center p-6 sm:p-10 border-2 border-dashed border-gray-200">
+               <Activity size={32} className="text-gray-300 mb-4 sm:mb-6" />
+               <h4 className="text-sm sm:text-xl font-black text-[#002B5B] dark:text-white uppercase italic">Queue Waiting</h4>
+               <p className="text-[10px] text-gray-400 uppercase mt-2">Select a member to view details</p>
             </div>
           )}
         </div>

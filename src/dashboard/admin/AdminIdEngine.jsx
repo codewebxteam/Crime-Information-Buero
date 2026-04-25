@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShieldCheck, Loader2, X, ShieldAlert, Database, Eye, Download } from "lucide-react";
+import { ShieldCheck, Loader2, X, ShieldAlert, Database, Eye, Download, Menu } from "lucide-react";
 import { db } from "../../firebase/firebase";
 import { collection, getDocs, query, where, doc, updateDoc } from "firebase/firestore";
 
@@ -99,9 +99,8 @@ const AdminIdEngine = () => {
     setIsDownloading(true);
     try {
       const pdf = new jsPDF({ orientation: "landscape", unit: "px", format: [600, 380] });
-      const navy = [0, 31, 63], red = [139, 0, 0], yellow = [250, 204, 21];
+      const navy = [0, 31, 63];
 
-      // Prepare Data
       const [photoData, logoData, signData] = await Promise.all([
         loadImage(member.photo),
         loadImage(logoImg),
@@ -111,42 +110,35 @@ const AdminIdEngine = () => {
       const qrText = `CIB Verified\nName: ${member.name}\nID: ${member.idNumber}\nRank: ${member.rank}`;
       const qrData = await generateQR(qrText);
 
-      // --- PAGE 1: FRONT ---
       pdf.setFillColor(255, 255, 255); pdf.rect(0, 0, 600, 380, "F");
       pdf.setDrawColor(...navy); pdf.setLineWidth(3); pdf.roundedRect(2, 2, 596, 376, 10, 10, "S");
       
-      // Header
       pdf.setFillColor(...navy); pdf.rect(3, 28, 594, 75, "F");
       if (logoData) pdf.addImage(logoData, "JPEG", 20, 38, 55, 55);
       pdf.setTextColor(255, 255, 255); pdf.setFontSize(26); pdf.text("CRIME INFORMATION BUREAU", 90, 65);
       
-      // Photo Area
       if (photoData) {
         pdf.setDrawColor(...navy); pdf.setLineWidth(2);
         pdf.roundedRect(20, 125, 110, 130, 5, 5, "S");
         pdf.addImage(photoData, "JPEG", 21.5, 126.5, 107, 127);
       }
 
-      // Member Details
       pdf.setTextColor(...navy); pdf.setFontSize(24); pdf.text(member.name.toUpperCase(), 155, 155);
       pdf.setFontSize(14); pdf.setTextColor(80, 80, 80);
       pdf.text(`Designation : ${member.rank}`, 155, 190);
       pdf.text(`Working Area : ${member.address}`, 155, 220);
       pdf.text(`Mobile No. : ${member.contact}`, 155, 250);
 
-      // QR Placement (FIXED)
       if (qrData) {
         pdf.addImage(qrData, "PNG", 490, 125, 75, 75);
         pdf.setTextColor(...navy); pdf.setFontSize(8);
         pdf.text("SCAN TO VERIFY", 527, 210, { align: "center" });
       }
 
-      // Signature
       if (signData) pdf.addImage(signData, "PNG", 480, 275, 90, 35);
       pdf.setDrawColor(...navy); pdf.line(475, 312, 580, 312);
       pdf.setFontSize(10); pdf.text("Auth. Signatory", 527, 325, { align: "center" });
 
-      // --- PAGE 2: BACK SIDE ---
       pdf.addPage();
       pdf.setFillColor(255, 255, 255); pdf.rect(0, 0, 600, 380, "F");
       pdf.setDrawColor(...navy); pdf.roundedRect(2, 2, 596, 376, 10, 10, "S");
@@ -173,46 +165,63 @@ const AdminIdEngine = () => {
   if (loading) return <div className="h-screen flex items-center justify-center font-black">BOOTING SYSTEM...</div>;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 pb-10 px-4">
-      <div className="bg-[#001F3F] p-8 rounded-[2.5rem] text-white flex justify-between items-center shadow-2xl border-b-4 border-red-700">
-        <div className="flex items-center gap-5 italic font-black text-3xl">CIB ADMIN TERMINAL</div>
+    <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 pb-10 px-2 sm:px-4">
+      {/* Responsive Header */}
+      <div className="bg-[#001F3F] p-4 sm:p-8 rounded-[1.5rem] sm:rounded-[2.5rem] text-white flex flex-col sm:flex-row justify-between items-center shadow-2xl border-b-4 border-red-700 gap-4">
+        <div className="flex items-center gap-3 sm:gap-5 italic font-black text-xl sm:text-3xl text-center sm:text-left">
+          CIB ADMIN TERMINAL
+        </div>
+        <div className="hidden sm:block text-xs font-bold uppercase tracking-widest opacity-60">
+          Engine Active v2.0
+        </div>
       </div>
 
-      <div className="grid grid-cols-12 gap-8">
-        <OfficerSidebar 
-            searchTerm={searchTerm} setSearchTerm={setSearchTerm} 
-            filteredMembers={approvedMembers.filter(m => m.fullName?.toLowerCase().includes(searchTerm.toLowerCase()))} 
-            selectedMemberId={selectedMemberId} setSelectedMemberId={setSelectedMemberId} 
-        />
-        <IdEditorForm 
-            member={member} handleInput={(e) => setMember({...member, [e.target.name]: e.target.value})}
-            syncToDatabase={syncToDatabase} onPreviewClick={() => setShowModal(true)} 
-            isProcessing={isProcessing} isDataSynced={isDataSynced} updateSuccess={updateSuccess} 
-        />
+      {/* Grid: 1 column on mobile, 12 columns on desktop */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-8">
+        <div className="lg:col-span-4 order-2 lg:order-1">
+          <OfficerSidebar 
+              searchTerm={searchTerm} setSearchTerm={setSearchTerm} 
+              filteredMembers={approvedMembers.filter(m => m.fullName?.toLowerCase().includes(searchTerm.toLowerCase()))} 
+              selectedMemberId={selectedMemberId} setSelectedMemberId={setSelectedMemberId} 
+          />
+        </div>
+        <div className="lg:col-span-8 order-1 lg:order-2">
+          <IdEditorForm 
+              member={member} handleInput={(e) => setMember({...member, [e.target.name]: e.target.value})}
+              syncToDatabase={syncToDatabase} onPreviewClick={() => setShowModal(true)} 
+              isProcessing={isProcessing} isDataSynced={isDataSynced} updateSuccess={updateSuccess} 
+          />
+        </div>
       </div>
 
+      {/* Full-screen Responsive Modal */}
       <AnimatePresence>
         {showModal && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90">
-            <div className="bg-[#f3f4f6] rounded-[2.5rem] w-full max-w-4xl h-[90vh] flex flex-col overflow-hidden">
-              <div className="p-6 border-b flex justify-between items-center bg-white">
-                <h2 className="font-black uppercase text-sm tracking-widest text-[#001F3F]">Visual Verification Preview</h2>
-                <button onClick={() => setShowModal(false)} className="p-2 bg-red-100 text-red-600 rounded-full"><X size={20}/></button>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/90">
+            <div className="bg-[#f3f4f6] rounded-[1.5rem] sm:rounded-[2.5rem] w-full max-w-4xl max-h-[95vh] flex flex-col overflow-hidden">
+              <div className="p-4 sm:p-6 border-b flex justify-between items-center bg-white">
+                <h2 className="font-black uppercase text-xs sm:text-sm tracking-widest text-[#001F3F]">Visual Preview</h2>
+                <button onClick={() => setShowModal(false)} className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200 transition-colors">
+                  <X size={20}/>
+                </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-10 flex flex-col items-center no-scrollbar">
-                <IdCardTemplate member={member} />
+              {/* Scrollable Preview Area */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-10 flex flex-col items-center no-scrollbar bg-gray-100">
+                <div className="scale-[0.6] xs:scale-[0.8] sm:scale-100 origin-top">
+                  <IdCardTemplate member={member} />
+                </div>
               </div>
 
-              <div className="p-6 border-t flex justify-between items-center bg-white">
-                 <span className="text-[10px] font-black text-gray-400">ENCRYPTION ACTIVE • SECURE PDF ENGINE</span>
+              <div className="p-4 sm:p-6 border-t flex flex-col sm:flex-row justify-between items-center bg-white gap-4">
+                 <span className="text-[10px] font-black text-gray-400 text-center sm:text-left">SECURE DOC ENGINE</span>
                  <button 
                   onClick={downloadOfficialPDF}
                   disabled={isDownloading}
-                  className="px-10 py-3 bg-[#001F3F] text-white rounded-xl font-black uppercase text-xs flex items-center gap-2 shadow-xl active:scale-95 transition-all"
+                  className="w-full sm:w-auto px-10 py-3 bg-[#001F3F] text-white rounded-xl font-black uppercase text-xs flex items-center justify-center gap-2 shadow-xl active:scale-95 transition-all"
                  >
                    {isDownloading ? <Loader2 className="animate-spin" size={16} /> : <Download size={16} />}
-                   {isDownloading ? "Generating QR & PDF..." : "Download 2-Page PDF"}
+                   {isDownloading ? "Generating..." : "Download PDF"}
                  </button>
               </div>
             </div>
