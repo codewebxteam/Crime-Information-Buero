@@ -1,144 +1,70 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
+import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import QRCode from "qrcode";
 import { Download, Loader2 } from "lucide-react";
 
-import logoImg from "../../assets/logo.png";
-import signatureImg from "../../assets/signature.png";
-
-const IdCardGenerator = ({ member }) => {
+const IdCardGenerator = ({ member, elementRef }) => {
   const [loading, setLoading] = useState(false);
 
-  // 🔥 ALWAYS LATEST DATA
-  const memberRef = useRef(member);
-
-  useEffect(() => {
-    memberRef.current = member;
-  }, [member]);
-
-  const loadImage = (src) => {
-    return new Promise((resolve) => {
-      if (!src) return resolve(null);
-      const img = new Image();
-      img.crossOrigin = "Anonymous";
-      img.src = src;
-
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-
-        const maxWidth = 500;
-        const scale = Math.min(1, maxWidth / img.width);
-
-        canvas.width = img.width * scale;
-        canvas.height = img.height * scale;
-
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL("image/jpeg", 0.9));
-      };
-
-      img.onerror = () => resolve(null);
-    });
-  };
-
   const generatePDF = async () => {
-    const currentMember = memberRef.current;
+    const element = elementRef?.current;
 
-    if (!currentMember) {
-      alert("Member data not ready!");
+    if (!element) {
+      alert("Error: Card design nahi mila! Page refresh karein.");
       return;
     }
 
     setLoading(true);
 
     try {
-      const pdf = new jsPDF({
-        orientation: "landscape",
-        unit: "px",
-        format: [600, 380],
+      // 🛑 Saare zabardasti wale layout hacks hata diye hain
+      // Sirf sabse clean aur safe settings rakhi hain
+      const canvas = await html2canvas(element, {
+        scale: 3, // HD Quality ke liye
+        useCORS: true, // Images aur Logo load karne ke liye
+        backgroundColor: "#f3f4f6", // Template ka background
+        logging: false,
+        // 🔥 Ye dono lines scroll hone par PDF ko katne se rokti hain
+        scrollX: 0,
+        scrollY: -window.scrollY, 
+        
+        onclone: (clonedDoc) => {
+          const els = clonedDoc.getElementsByTagName("*");
+          for (let el of els) {
+            // 🔥 Sirf Color Crash (oklch) ko fix kar rahe hain. 
+            // Text aur Width/Height ko bilkul chheda nahi gaya hai.
+            const style = window.getComputedStyle(el);
+            if (style.color && style.color.includes("oklch")) el.style.color = "#001F3F";
+            if (style.backgroundColor && style.backgroundColor.includes("oklch")) el.style.backgroundColor = "#ffffff";
+            
+            // Mobile screen wali scaling ko reset karne ke liye
+            if (el.style.transform && el.style.transform !== "none") {
+              el.style.transform = "none";
+            }
+          }
+        }
       });
 
-      const navy = [0, 31, 63];
+      const imgData = canvas.toDataURL("image/png");
 
-      // 🔥 ALWAYS LATEST VALUES
-      const name = currentMember.name || "N/A";
-      const designation = currentMember.designation || "MEMBER";
-      const idNumber = currentMember.idNumber || "PENDING";
-      const address = currentMember.address || "N/A";
-      const photo = currentMember.photo || "";
-      const validUntil = currentMember.validUntil || "OCT. 2026";
-      const phone = currentMember.phone || currentMember.contact || "N/A";
+      // A4 Size PDF setup
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+      
+      // Aspect ratio set karo
+      const pdfHeight = (canvasHeight * pdfWidth) / canvasWidth;
 
-      console.log("PDF DATA:", currentMember); // DEBUG
+      // 🔥 Top se 10mm ka safe margin de raha hoon taaki "REGD. BY GOVT" wala red border upar printer se kate nahi
+      pdf.addImage(imgData, "PNG", 0, 10, pdfWidth, pdfHeight, undefined, 'FAST');
 
-      const [pData, lData, sData] = await Promise.all([
-        loadImage(photo),
-        loadImage(logoImg),
-        loadImage(signatureImg),
-      ]);
+      const fileName = `CIB_Official_ID_${member?.idNumber || "Member"}.pdf`;
+      pdf.save(fileName);
 
-      const qrText = `CIB VERIFIED\nName: ${name}\nPost: ${designation}\nID: ${idNumber}`;
-      const qrData = await QRCode.toDataURL(qrText);
-
-      // FRONT
-      pdf.setFillColor(255, 255, 255);
-      pdf.rect(0, 0, 600, 380, "F");
-
-      pdf.setDrawColor(...navy);
-      pdf.setLineWidth(3);
-      pdf.roundedRect(2, 2, 596, 376, 10, 10, "S");
-
-      pdf.setFillColor(...navy);
-      pdf.rect(3, 28, 594, 75, "F");
-
-      if (lData) pdf.addImage(lData, "JPEG", 20, 38, 55, 55);
-
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(20);
-      pdf.text("CRIME INFORMATION BUREAU", 90, 65);
-
-      if (pData) {
-        pdf.roundedRect(20, 125, 110, 130, 5, 5, "S");
-        pdf.addImage(pData, "JPEG", 22, 127, 106, 126);
-      }
-
-      pdf.setTextColor(...navy);
-      pdf.setFontSize(20);
-      pdf.text(name.toUpperCase(), 155, 150);
-
-      pdf.setTextColor(139, 0, 0);
-      pdf.setFontSize(15);
-      pdf.text(`Designation: ${designation.toUpperCase()}`, 155, 180);
-
-      pdf.setTextColor(80, 80, 80);
-      pdf.setFontSize(12);
-      pdf.text(`Working Area: ${address}`, 155, 205);
-
-      pdf.text(`Mobile: ${phone}`, 155, 230);
-
-      if (qrData) pdf.addImage(qrData, "PNG", 490, 125, 75, 75);
-      if (sData) pdf.addImage(sData, "PNG", 480, 275, 90, 35);
-
-      pdf.line(475, 312, 580, 312);
-      pdf.setFontSize(10);
-      pdf.text("Auth. Signatory", 527, 325, { align: "center" });
-
-      pdf.setFillColor(...navy);
-      pdf.rect(3, 345, 594, 32, "F");
-
-      pdf.setTextColor(255, 255, 255);
-      pdf.text(`VALID UNTIL: ${validUntil}`, 580, 365, {
-        align: "right",
-      });
-
-      // BACK
-      pdf.addPage();
-      pdf.text("CENTRAL OFFICE", 300, 160, { align: "center" });
-
-      pdf.save(`CIB_ID_${idNumber}.pdf`);
     } catch (err) {
-      console.error(err);
-      alert("Error generating PDF!");
+      console.error("PDF Generate Error:", err);
+      alert("PDF Generate hone mein problem aayi hai. Console check karein.");
     } finally {
       setLoading(false);
     }
@@ -147,11 +73,15 @@ const IdCardGenerator = ({ member }) => {
   return (
     <button
       onClick={generatePDF}
-      disabled={loading}
-      className="bg-[#002B5B] text-white px-6 py-3 rounded-xl flex items-center gap-2"
+      disabled={loading || !member}
+      className="w-full sm:w-auto bg-[#001F3F] hover:bg-black text-white px-8 py-4 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 transition-all active:scale-95 shadow-xl disabled:opacity-50"
     >
-      {loading ? <Loader2 className="animate-spin" /> : <Download />}
-      {loading ? "Generating..." : "Download ID"}
+      {loading ? (
+        <Loader2 className="animate-spin" size={18} />
+      ) : (
+        <Download size={18} />
+      )}
+      {loading ? "Generating Perfect PDF..." : "Download Official ID"}
     </button>
   );
 };

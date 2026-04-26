@@ -176,7 +176,7 @@ const AdminIdEngine = () => {
         </div>
       </div>
 
-      {/* Grid: 1 column on mobile, 12 columns on desktop */}
+      {/* Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-8">
         <div className="lg:col-span-4 order-2 lg:order-1">
           <OfficerSidebar 
@@ -194,36 +194,35 @@ const AdminIdEngine = () => {
         </div>
       </div>
 
-      {/* Full-screen Responsive Modal */}
+      {/* 🔥 THE FIXED MODAL SECTION 🔥 */}
       <AnimatePresence>
         {showModal && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/90">
-            <div className="bg-[#f3f4f6] rounded-[1.5rem] sm:rounded-[2.5rem] w-full max-w-4xl max-h-[95vh] flex flex-col overflow-hidden">
-              <div className="p-4 sm:p-6 border-b flex justify-between items-center bg-white">
-                <h2 className="font-black uppercase text-xs sm:text-sm tracking-widest text-[#001F3F]">Visual Preview</h2>
-                <button onClick={() => setShowModal(false)} className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200 transition-colors">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center sm:p-4 bg-black/95 backdrop-blur-sm">
+            <div className="bg-[#0d0d0d] rounded-none sm:rounded-[2rem] w-full max-w-5xl h-[100dvh] sm:h-[90vh] flex flex-col overflow-hidden shadow-2xl relative border border-white/10">
+              
+              {/* Header */}
+              <div className="p-4 sm:p-6 border-b border-white/10 flex justify-between items-center bg-[#111] z-20 shrink-0">
+                <h2 className="font-black uppercase text-xs sm:text-sm tracking-widest text-white">
+                  Visual <span className="text-red-600">Preview</span>
+                </h2>
+                <button onClick={() => setShowModal(false)} className="p-2 bg-red-500/10 text-red-500 rounded-full hover:bg-red-600 hover:text-white transition-all active:scale-95">
                   <X size={20}/>
                 </button>
               </div>
 
-              {/* Scrollable Preview Area */}
-              <div className="flex-1 overflow-y-auto p-4 sm:p-10 flex flex-col items-center no-scrollbar bg-gray-100">
-                <div className="scale-[0.6] xs:scale-[0.8] sm:scale-100 origin-top">
+              {/* 🔥 SCROLLABLE PREVIEW AREA 🔥 */}
+              <div 
+                className="flex-1 overflow-auto bg-[#1a1a1a] flex p-4 sm:p-8" 
+                style={{ WebkitOverflowScrolling: "touch" }} // Smooth scroll on iOS
+              >
+                {/* 'm-auto' centering trick: Agar card screen se chota hai, to center rahega.
+                  Agar card bada hai, to ye natural scroll allow karega aur edges nahi kaatega.
+                */}
+                <div className="m-auto w-max h-max transform scale-90 sm:scale-100 transition-all duration-300">
                   <IdCardTemplate member={member} />
                 </div>
               </div>
 
-              <div className="p-4 sm:p-6 border-t flex flex-col sm:flex-row justify-between items-center bg-white gap-4">
-                 <span className="text-[10px] font-black text-gray-400 text-center sm:text-left">SECURE DOC ENGINE</span>
-                 <button 
-                  onClick={downloadOfficialPDF}
-                  disabled={isDownloading}
-                  className="w-full sm:w-auto px-10 py-3 bg-[#001F3F] text-white rounded-xl font-black uppercase text-xs flex items-center justify-center gap-2 shadow-xl active:scale-95 transition-all"
-                 >
-                   {isDownloading ? <Loader2 className="animate-spin" size={16} /> : <Download size={16} />}
-                   {isDownloading ? "Generating..." : "Download PDF"}
-                 </button>
-              </div>
             </div>
           </motion.div>
         )}
