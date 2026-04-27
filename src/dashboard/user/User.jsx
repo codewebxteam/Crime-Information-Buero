@@ -59,7 +59,6 @@ const User = () => {
   const [photoPreview, setPhotoPreview] = useState(null);
   const [formErrors, setFormErrors] = useState({});
 
-  // Button tabhi active hoga jab ye sab true hoga
   const isFormValid = 
     formData.fullName.trim() !== "" &&
     formData.email.trim() !== "" &&
@@ -86,11 +85,12 @@ const User = () => {
     setFormErrors({ ...formErrors, [name]: "" });
   };
 
+  // 🔥 FIX 1: Any Image Format, Max 2MB, No PDFs allowed for photo
   const handlePhotoChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.type !== "image/jpeg") {
-        alert("Bhai, photo sirf .jpg format mein upload karein!");
+      if (!file.type.startsWith("image/")) {
+        alert("Bhai, photo sirf image format (JPG, PNG, etc.) mein upload karein!");
         e.target.value = null;
         return;
       }
@@ -159,6 +159,7 @@ const User = () => {
   const handleTrackApplication = async () => {
     if (!trackingId.trim()) return;
     setIsSearching(true);
+    setSearchError(""); // Purana error clear karo
     try {
       const searchTerm = trackingId.toLowerCase().trim();
       let appDoc = await getDoc(doc(db, "membershipApplications", searchTerm));
@@ -167,11 +168,22 @@ const User = () => {
         const snapshot = await getDocs(q);
         if (!snapshot.empty) appDoc = snapshot.docs[0];
       }
+      
       if (appDoc && appDoc.exists()) {
         setApplicationStatus({ id: appDoc.id, ...appDoc.data() });
         setShowStatus(true);
-      } else { setSearchError("No application found."); }
-    } catch (err) { setSearchError("Tracking error."); } finally { setIsSearching(false); }
+      } else { 
+        // 🔥 FIX 2: Tracking alert auto-hide after 3 seconds
+        setSearchError("No application found."); 
+        setTimeout(() => setSearchError(""), 3000);
+      }
+    } catch (err) { 
+      // 🔥 Tracking alert auto-hide after 3 seconds
+      setSearchError("Tracking error."); 
+      setTimeout(() => setSearchError(""), 3000);
+    } finally { 
+      setIsSearching(false); 
+    }
   };
 
   const resetForm = () => {
@@ -280,12 +292,14 @@ const User = () => {
                         </div>
 
                         <div>
-                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Photo (.jpg only) *</label>
+                          {/* 🔥 Update Label: Any Image Allowed */}
+                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Photo (Image Only) *</label>
                           <div className="flex items-center gap-4">
                             <label className="flex-1 flex flex-col items-center justify-center h-24 border-2 border-dashed rounded-2xl cursor-pointer bg-gray-50 dark:bg-black border-gray-200 dark:border-white/10">
                               <Upload size={20} className="text-gray-400 mb-1" />
                               <span className="text-[9px] font-bold text-gray-400 uppercase">{photoFile ? photoFile.name : "Upload Photo"}</span>
-                              <input type="file" className="hidden" accept=".jpg,.jpeg" onChange={handlePhotoChange} />
+                              {/* 🔥 strict accept="image/*" added */}
+                              <input type="file" className="hidden" accept="image/*" onChange={handlePhotoChange} />
                             </label>
                             {photoPreview && <img src={photoPreview} alt="Preview" className="w-20 h-20 object-cover rounded-xl" />}
                           </div>
@@ -323,9 +337,17 @@ const User = () => {
                 <div className="space-y-4">
                   <input type="email" value={trackingId} onChange={(e) => setTrackingId(e.target.value)} className="w-full bg-gray-50 dark:bg-black border p-4 rounded-2xl text-sm font-bold border-gray-200 dark:border-white/10 outline-none" placeholder="Enter Registered Email" />
                   <button onClick={handleTrackApplication} className="w-full bg-[#002B5B] hover:bg-red-700 text-white py-4 rounded-2xl font-black uppercase transition-all">Check Status</button>
-                  {searchError && <p className="text-red-600 text-sm font-bold text-center mt-4 uppercase">{searchError}</p>}
+                  
+                  {/* 🔥 Tracking Error Message 🔥 */}
+                  {searchError && (
+                    <div className="flex items-center justify-center gap-2 text-red-600 bg-red-100 p-3 rounded-xl">
+                      <AlertTriangle size={18} />
+                      <p className="text-sm font-bold uppercase">{searchError}</p>
+                    </div>
+                  )}
                 </div>
-                {showStatus && applicationStatus && (
+
+                {showStatus && applicationStatus && !searchError && (
                   <div className="mt-8 p-6 bg-gray-50 dark:bg-black rounded-2xl border border-gray-200 dark:border-white/10">
                     <p className="font-black text-[#002B5B] dark:text-white uppercase mb-2">Status: <span className="text-red-700">{applicationStatus.status}</span></p>
                     <p className="text-sm font-bold uppercase">Update: {applicationStatus.trackStatus}</p>

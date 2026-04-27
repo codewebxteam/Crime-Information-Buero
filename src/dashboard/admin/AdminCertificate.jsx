@@ -60,7 +60,8 @@ const AdminCertificate = () => {
           ...doc.data(),
         }));
         setApprovedMembers(members);
-        if (members.length > 0) {
+        // Sirf tab auto-select karo jab koi search term na ho
+        if (members.length > 0 && !searchTerm) {
           setSelectedMemberId(members[0].id);
         }
       } catch (error) {
@@ -105,6 +106,13 @@ const AdminCertificate = () => {
       (m.memberId || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
       (m.email || "").toLowerCase().includes(searchTerm.toLowerCase()),
   );
+
+  // Auto-select first filtered member if searchTerm exists
+  useEffect(() => {
+    if (searchTerm && filteredMembers.length > 0) {
+       setSelectedMemberId(filteredMembers[0].id);
+    }
+  }, [searchTerm, filteredMembers.length]);
 
   const handleInput = (e) => {
     const { name, value } = e.target;
@@ -221,22 +229,35 @@ const AdminCertificate = () => {
             </div>
 
             {/* Select Section */}
-            <div className="space-y-2">
+            <div className="space-y-2 relative">
               <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest pl-2">
                 Member Database
               </label>
-              <select
-                value={selectedMemberId}
-                onChange={handleMemberSelect}
-                className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-white/10 p-4 rounded-2xl text-xs font-bold text-[#002B5B] dark:text-white focus:border-red-700 outline-none transition-all cursor-pointer"
-              >
-                <option value="">-- Choose member --</option>
-                {filteredMembers.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.fullName || m.name} ({m.memberId})
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                {/* 🔥 Styled select to match the input fields 🔥 */}
+                <select
+                  value={selectedMemberId}
+                  onChange={handleMemberSelect}
+                  className="w-full appearance-none bg-gray-50 dark:bg-[#111] border-2 border-gray-200 dark:border-white/10 p-4 pr-10 rounded-2xl text-xs font-bold text-[#002B5B] dark:text-white focus:border-red-700 outline-none shadow-inner transition-all cursor-pointer"
+                >
+                  {/* Hide default option when searching */}
+                  {!searchTerm && <option value="" className="bg-white dark:bg-[#111]">-- Choose member --</option>}
+                  
+                  {filteredMembers.map((m) => (
+                    <option key={m.id} value={m.id} className="bg-white dark:bg-[#111]">
+                      {m.fullName || m.name} ({m.memberId})
+                    </option>
+                  ))}
+                  
+                  {searchTerm && filteredMembers.length === 0 && (
+                     <option disabled className="bg-white dark:bg-[#111]">No member found matching "{searchTerm}"</option>
+                  )}
+                </select>
+                {/* Custom arrow for the dropdown */}
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <ChevronRight size={14} className="text-gray-400 rotate-90" />
+                </div>
+              </div>
             </div>
 
             {/* System Info (ReadOnly) */}

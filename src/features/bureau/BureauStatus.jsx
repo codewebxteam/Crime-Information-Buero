@@ -1,15 +1,48 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Activity, Users, ShieldCheck } from 'lucide-react';
+import { db } from '../../firebase/firebase'; 
+import { doc, getDoc, setDoc, updateDoc, increment, onSnapshot } from 'firebase/firestore'; 
 
 const BureauStatus = () => {
   const [visitorCount, setVisitorCount] = useState('090000');
+  
+  // 🔥 StrictMode Double-Render Fix: Ye track karega ki count badh chuka hai ya nahi
+  const hasIncremented = useRef(false);
 
   useEffect(() => {
-    const storedCount = localStorage.getItem('visitorCount');
-    let currentCount = storedCount ? parseInt(storedCount, 10) : 90000;
-    currentCount++;
-    localStorage.setItem('visitorCount', currentCount.toString());
-    setVisitorCount(currentCount.toString().padStart(6, '0'));
+    const counterRef = doc(db, 'analytics', 'visitors');
+
+    const updateCounter = async () => {
+      // Agar ek baar count badh chuka hai is render me, to wapas return kar jao
+      if (hasIncremented.current) return;
+      hasIncremented.current = true; // Lock kar diya
+
+      try {
+        const docSnap = await getDoc(counterRef);
+        
+        if (!docSnap.exists()) {
+          await setDoc(counterRef, { count: 90000 });
+        }
+        
+        // 🔥 Ab ye sirf 1 hi baar chalega
+        await updateDoc(counterRef, {
+          count: increment(1)
+        });
+      } catch (error) {
+        console.error("Error updating visitor counter:", error);
+      }
+    };
+
+    updateCounter();
+
+    const unsubscribe = onSnapshot(counterRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const currentCount = docSnap.data().count;
+        setVisitorCount(currentCount.toString().padStart(6, '0'));
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   return (
@@ -45,7 +78,7 @@ const BureauStatus = () => {
           </div>
         </div>
 
-        {/* --- Center: Developer Credits (Relocated to Center) --- */}
+        {/* --- Center: Developer Credits --- */}
         <div className="flex flex-col items-center md:flex-1"> 
           <span className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.3em] mb-2">
             System Architect
