@@ -17,6 +17,11 @@ const ApplicantDetails = ({
     { label: "Rejected", icon: <XCircle size={16} />, color: "text-red-500" },
   ];
 
+  // 🔥 SENIOR DEV FIX: Get all KYC images (Naye multiple images aur purane single image dono ke liye support)
+  const kycImages = selectedApp.kycUrls && selectedApp.kycUrls.length > 0 
+    ? selectedApp.kycUrls 
+    : (selectedApp.kycUrl ? [selectedApp.kycUrl] : []);
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 10 }} 
@@ -81,14 +86,36 @@ const ApplicantDetails = ({
               <p className="text-[11px] md:text-xs font-bold text-[#002B5B] dark:text-white">{selectedApp.phone}</p>
             </div>
           </div>
-          <div className="flex items-center justify-between p-4 md:p-5 bg-white dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm">
-            <div className="flex items-center gap-3 text-blue-600">
+          
+          {/* 🔥 SENIOR DEV FIX: Smart Multiple Images Gallery View 🔥 */}
+          <div className="flex flex-col gap-3 p-4 md:p-5 bg-white dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm">
+            <div className="flex items-center gap-3 text-blue-600 border-b border-gray-100 dark:border-white/5 pb-2">
               <FileText size={18} />
-              <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest">Identity Proof</span>
+              <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest">
+                Identity Proof {kycImages.length > 1 ? `(${kycImages.length})` : ''}
+              </span>
             </div>
-            <a href={selectedApp.kycUrl} target="_blank" rel="noreferrer" className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-600">
-              <ExternalLink size={16} />
-            </a>
+            
+            <div className="flex gap-3 overflow-x-auto pb-1 custom-scrollbar">
+              {kycImages.length > 0 ? (
+                kycImages.map((url, index) => (
+                  <a 
+                    key={index} 
+                    href={url} 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    className="relative shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 border-gray-100 dark:border-white/10 group block shadow-sm"
+                  >
+                     <img src={url} alt={`KYC Document ${index + 1}`} className="w-full h-full object-cover" />
+                     <div className="absolute inset-0 bg-blue-600/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                       <ExternalLink size={16} className="text-white" />
+                     </div>
+                  </a>
+                ))
+              ) : (
+                <p className="text-xs text-gray-400 font-bold italic">No document available</p>
+              )}
+            </div>
           </div>
         </div>
 

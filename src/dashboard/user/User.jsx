@@ -54,9 +54,14 @@ const User = () => {
     state: "",
     district: "",
   });
+  
   const [photoFile, setPhotoFile] = useState(null);
-  const [kycFile, setKycFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
+  
+  // 🔥 SENIOR DEV FIX 1: Changed to Array to hold multiple files and previews 🔥
+  const [kycFiles, setKycFiles] = useState([]);
+  const [kycPreviews, setKycPreviews] = useState([]);
+  
   const [formErrors, setFormErrors] = useState({});
 
   const isFormValid = 
@@ -72,7 +77,7 @@ const User = () => {
     formData.district.trim() !== "" &&
     selectedPlan !== null &&
     photoFile !== null &&
-    kycFile !== null;
+    kycFiles.length > 0; // 🔥 Updated validation check 🔥
 
   const handleInput = (e) => {
     const { name, value } = e.target;
@@ -85,7 +90,6 @@ const User = () => {
     setFormErrors({ ...formErrors, [name]: "" });
   };
 
-  // 🔥 FIX 1: Any Image Format, Max 2MB, No PDFs allowed for photo
   const handlePhotoChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -106,21 +110,39 @@ const User = () => {
     }
   };
 
+  // 🔥 SENIOR DEV FIX 2: Handle Multiple KYC Images 🔥
   const handleKycChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.type !== "application/pdf") {
-        alert("KYC document sirf .pdf format mein hona chahiye!");
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const validFiles = [];
+    
+    // Clear old previews before processing new ones
+    setKycPreviews([]);
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (!file.type.startsWith("image/")) {
+        alert(`File "${file.name}" image format nahi hai. Sirf Images allow hain!`);
         e.target.value = null;
         return;
       }
       if (file.size > 2 * 1024 * 1024) {
-        alert("KYC file 2MB se badi hai!");
+        alert(`File "${file.name}" 2MB se badi hai!`);
         e.target.value = null;
         return;
       }
-      setKycFile(file);
+      
+      validFiles.push(file);
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setKycPreviews((prev) => [...prev, reader.result]);
+      };
+      reader.readAsDataURL(file);
     }
+    
+    setKycFiles(validFiles);
   };
 
   const handleSubmit = async (e) => {
@@ -136,7 +158,10 @@ const User = () => {
       }
 
       const photoUrl = await uploadImageToCloudinary(photoFile, 'photos');
-      const kycUrl = await uploadImageToCloudinary(kycFile, 'kyc');
+      
+      // 🔥 SENIOR DEV FIX 3: Parallel Upload for Multiple KYC Images 🔥
+      const kycUploadPromises = kycFiles.map(file => uploadImageToCloudinary(file, 'kyc'));
+      const kycUrlsArray = await Promise.all(kycUploadPromises);
       
       await addDoc(collection(db, "membershipApplications"), {
         ...formData,
@@ -144,7 +169,8 @@ const User = () => {
         membershipLevel: selectedPlan.value,
         membershipLabel: selectedPlan.label,
         photoUrl,
-        kycUrl,
+        kycUrl: kycUrlsArray[0] || "", // For backward compatibility with admin panel (string)
+        kycUrls: kycUrlsArray, // Saving the full array of multiple images
         status: "Pending",
         tempPasswordHash: btoa(formData.password),
         trackStatus: "Application Received",
@@ -159,7 +185,7 @@ const User = () => {
   const handleTrackApplication = async () => {
     if (!trackingId.trim()) return;
     setIsSearching(true);
-    setSearchError(""); // Purana error clear karo
+    setSearchError(""); 
     try {
       const searchTerm = trackingId.toLowerCase().trim();
       let appDoc = await getDoc(doc(db, "membershipApplications", searchTerm));
@@ -173,12 +199,10 @@ const User = () => {
         setApplicationStatus({ id: appDoc.id, ...appDoc.data() });
         setShowStatus(true);
       } else { 
-        // 🔥 FIX 2: Tracking alert auto-hide after 3 seconds
         setSearchError("No application found."); 
         setTimeout(() => setSearchError(""), 3000);
       }
     } catch (err) { 
-      // 🔥 Tracking alert auto-hide after 3 seconds
       setSearchError("Tracking error."); 
       setTimeout(() => setSearchError(""), 3000);
     } finally { 
@@ -188,7 +212,12 @@ const User = () => {
 
   const resetForm = () => {
     setFormData({ fullName: "", email: "", password: "", confirmPassword: "", phone: "", address: "", dob: "", gender: "", state: "", district: "" });
-    setPhotoFile(null); setKycFile(null); setPhotoPreview(null); setSelectedPlan(null); setSubmitSuccess(false);
+    setPhotoFile(null); 
+    setPhotoPreview(null); 
+    setKycFiles([]); // Reset Multiple Files
+    setKycPreviews([]); // Reset Previews
+    setSelectedPlan(null); 
+    setSubmitSuccess(false);
   };
 
   return (
@@ -292,26 +321,42 @@ const User = () => {
                         </div>
 
                         <div>
-                          {/* 🔥 Update Label: Any Image Allowed */}
                           <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Photo (Image Only) *</label>
                           <div className="flex items-center gap-4">
                             <label className="flex-1 flex flex-col items-center justify-center h-24 border-2 border-dashed rounded-2xl cursor-pointer bg-gray-50 dark:bg-black border-gray-200 dark:border-white/10">
                               <Upload size={20} className="text-gray-400 mb-1" />
                               <span className="text-[9px] font-bold text-gray-400 uppercase">{photoFile ? photoFile.name : "Upload Photo"}</span>
-                              {/* 🔥 strict accept="image/*" added */}
                               <input type="file" className="hidden" accept="image/*" onChange={handlePhotoChange} />
                             </label>
                             {photoPreview && <img src={photoPreview} alt="Preview" className="w-20 h-20 object-cover rounded-xl" />}
                           </div>
                         </div>
 
+                        {/* 🔥 SENIOR DEV FIX 4: Updated KYC UI for Multiple Images 🔥 */}
                         <div>
-                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">KYC (.pdf only) *</label>
-                          <label className="flex flex-col items-center justify-center h-24 border-2 border-dashed rounded-2xl cursor-pointer bg-gray-50 dark:bg-black border-gray-200 dark:border-white/10">
-                            <FileText size={20} className="text-gray-400 mb-1" />
-                            <span className="text-[9px] font-bold text-gray-400 uppercase">{kycFile ? kycFile.name : "Upload KYC"}</span>
-                            <input type="file" className="hidden" accept=".pdf" onChange={handleKycChange} />
-                          </label>
+                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">KYC (Images Only) *</label>
+                          <div className="flex items-center gap-4">
+                            <label className="flex-1 flex flex-col items-center justify-center h-24 border-2 border-dashed rounded-2xl cursor-pointer bg-gray-50 dark:bg-black border-gray-200 dark:border-white/10">
+                              <FileText size={20} className="text-gray-400 mb-1" />
+                              <span className="text-[9px] font-bold text-gray-400 uppercase">
+                                {kycFiles.length > 0 ? `${kycFiles.length} Image(s) Selected` : "Upload KYC Images"}
+                              </span>
+                              {/* Changed accept to 'image/*' and added 'multiple' */}
+                              <input type="file" className="hidden" accept="image/*" multiple onChange={handleKycChange} />
+                            </label>
+                            
+                            {/* Previews for Multiple KYC Images */}
+                            {kycPreviews.length > 0 && (
+                              <div className="flex gap-2">
+                                <img src={kycPreviews[0]} alt="KYC Preview" className="w-20 h-20 object-cover rounded-xl shrink-0" />
+                                {kycPreviews.length > 1 && (
+                                  <div className="w-20 h-20 bg-gray-200 dark:bg-gray-800 rounded-xl flex items-center justify-center text-xs font-bold text-gray-500 shrink-0">
+                                    +{kycPreviews.length - 1}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
 
@@ -338,7 +383,6 @@ const User = () => {
                   <input type="email" value={trackingId} onChange={(e) => setTrackingId(e.target.value)} className="w-full bg-gray-50 dark:bg-black border p-4 rounded-2xl text-sm font-bold border-gray-200 dark:border-white/10 outline-none" placeholder="Enter Registered Email" />
                   <button onClick={handleTrackApplication} className="w-full bg-[#002B5B] hover:bg-red-700 text-white py-4 rounded-2xl font-black uppercase transition-all">Check Status</button>
                   
-                  {/* 🔥 Tracking Error Message 🔥 */}
                   {searchError && (
                     <div className="flex items-center justify-center gap-2 text-red-600 bg-red-100 p-3 rounded-xl">
                       <AlertTriangle size={18} />
