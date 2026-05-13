@@ -50,7 +50,7 @@ const MemberDashboard = ({ initialTab = "profile" }) => {
 
         setFormattedDocsData({
           name: fetchedData.fullName || fetchedData.name || "",
-          designation: fetchedData.membershipLabel || "Member",
+          designation: fetchedData.designation || "Member",
           idNumber: fetchedData.memberId || "PENDING",
           phone: fetchedData.mobile || fetchedData.phone || "N/A",
           joinedSince: issueDateObj.toLocaleDateString("en-GB"),

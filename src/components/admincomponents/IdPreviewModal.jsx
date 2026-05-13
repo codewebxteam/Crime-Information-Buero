@@ -22,6 +22,7 @@ const IdPreviewModal = ({ isOpen, onClose, member }) => {
   const generatePreview = async () => {
     setStatus("capturing");
     try {
+      // Small delay to ensure template is rendered with member data
       await new Promise((r) => setTimeout(r, 1000));
 
       if (!cardRef.current) throw new Error("Template not found");
@@ -97,7 +98,7 @@ const IdPreviewModal = ({ isOpen, onClose, member }) => {
             </div>
           )}
 
-          {/* 🔥 Main Change: Iframe PDF hatakar HTML <img> lagaya gaya hai */}
+          {/* Main Viewer Display */}
           {status === "done" && previewImage && (
             <div className="w-full h-full flex items-center justify-center overflow-auto">
               <img 
@@ -108,7 +109,8 @@ const IdPreviewModal = ({ isOpen, onClose, member }) => {
             </div>
           )}
 
-          {/* Hidden Capture Target - Template background ke hisaab se scale hoga */}
+          {/* Hidden Capture Target */}
+          {/* 🔥 SENIOR DEV FIX: Member data passes the membershipLabel dynamically to the template */}
           <div className="absolute opacity-0 pointer-events-none" style={{ left: "-9999px" }}>
             <div ref={cardRef}>
               <IdCardTemplate member={member} />
