@@ -50,11 +50,20 @@ const MemberDashboard = ({ initialTab = "profile" }) => {
 
         setFormattedDocsData({
           name: fetchedData.fullName || fetchedData.name || "",
-          designation: fetchedData.designation || "Member",
+          designation: fetchedData.designation || fetchedData.membershipLabel || "Member",
           idNumber: fetchedData.memberId || "PENDING",
           phone: fetchedData.mobile || fetchedData.phone || "N/A",
           joinedSince: issueDateObj.toLocaleDateString("en-GB"),
-          validUntil: validUntilObj.toLocaleDateString("en-GB"),
+          
+          // 🔥 FIXED LOGIC: Ab ye database (admin update) ki date uthayega
+          validUntil: fetchedData.validUntil 
+            ? (typeof fetchedData.validUntil === 'string' 
+                ? fetchedData.validUntil 
+                : fetchedData.validUntil.toDate 
+                  ? fetchedData.validUntil.toDate().toLocaleDateString("en-GB") 
+                  : new Date(fetchedData.validUntil).toLocaleDateString("en-GB"))
+            : validUntilObj.toLocaleDateString("en-GB"),
+
           address: fetchedData.address || (fetchedData.district ? `${fetchedData.district}, ${fetchedData.state}` : "N/A"),
           photo: fetchedData.photoUrl || "",
         });
