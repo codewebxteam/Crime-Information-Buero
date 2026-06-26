@@ -1,9 +1,20 @@
-import React from "react";
-import { Search, UserCircle } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Search, UserCircle, ChevronLeft, ChevronRight } from "lucide-react";
 
 const OfficerSidebar = ({ searchTerm, setSearchTerm, filteredMembers, selectedMemberId, setSelectedMemberId }) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const totalPages = Math.ceil(filteredMembers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedMembers = filteredMembers.slice(startIndex, startIndex + itemsPerPage);
+
   return (
-    <div className="col-span-12 lg:col-span-4 xl:col-span-3 bg-white dark:bg-[#111] p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] shadow-xl h-[500px] lg:h-[700px] flex flex-col border border-gray-100 dark:border-white/5 transition-all duration-300">
+    <div className="col-span-12 lg:col-span-4 xl:col-span-3 bg-white dark:bg-[#111] p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] shadow-xl flex flex-col border border-gray-100 dark:border-white/5 transition-all duration-300">
       
       {/* Header Label */}
       <div className="flex items-center gap-2 mb-4 px-1">
@@ -25,10 +36,10 @@ const OfficerSidebar = ({ searchTerm, setSearchTerm, filteredMembers, selectedMe
         </div>
       </div>
 
-      {/* --- Scrollable List Section --- */}
-      <div className="flex-1 overflow-y-auto pr-2 space-y-2 custom-sidebar-scroll">
-        {filteredMembers.length > 0 ? (
-          filteredMembers.map((m) => (
+      {/* --- List Section without Scrollbar --- */}
+      <div className="flex-1 space-y-2 flex flex-col justify-start">
+        {paginatedMembers.length > 0 ? (
+          paginatedMembers.map((m) => (
             <button
               key={m.id}
               onClick={() => {
@@ -73,25 +84,28 @@ const OfficerSidebar = ({ searchTerm, setSearchTerm, filteredMembers, selectedMe
         )}
       </div>
 
-      {/* --- Styling for Scrollbar --- */}
-      <style>{`
-        .custom-sidebar-scroll::-webkit-scrollbar {
-          width: 5px;
-        }
-        .custom-sidebar-scroll::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-sidebar-scroll::-webkit-scrollbar-thumb {
-          background: #e2e8f0;
-          border-radius: 10px;
-        }
-        .dark .custom-sidebar-scroll::-webkit-scrollbar-thumb {
-          background: #1f2937;
-        }
-        .custom-sidebar-scroll::-webkit-scrollbar-thumb:hover {
-          background: #ef4444;
-        }
-      `}</style>
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="mt-6 pt-4 border-t border-gray-100 dark:border-white/5 flex items-center justify-between">
+          <button
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className={`p-2 rounded-lg flex items-center justify-center transition-all ${currentPage === 1 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-gray-100 dark:hover:bg-white/10 text-[#001F3F] dark:text-white'}`}
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <span className="text-[10px] font-black uppercase text-gray-400">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className={`p-2 rounded-lg flex items-center justify-center transition-all ${currentPage === totalPages ? 'opacity-30 cursor-not-allowed' : 'hover:bg-gray-100 dark:hover:bg-white/10 text-[#001F3F] dark:text-white'}`}
+          >
+            <ChevronRight size={20} />
+          </button>
+        </div>
+      )}
     </div>
   );
 };

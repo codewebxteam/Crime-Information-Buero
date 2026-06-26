@@ -46,7 +46,18 @@ const MemberDashboard = ({ initialTab = "profile" }) => {
                             fetchedData.createdAt ? new Date(fetchedData.createdAt) : new Date();
 
         const validUntilObj = new Date(issueDateObj);
-        validUntilObj.setFullYear(validUntilObj.getFullYear() + 2);
+        validUntilObj.setFullYear(validUntilObj.getFullYear() + 1);
+        const fallbackValidUntil = `${validUntilObj.toLocaleString('default', { month: 'short' }).toUpperCase()}. ${validUntilObj.getFullYear()}`;
+
+        let parsedValidUntil = fallbackValidUntil;
+        if (fetchedData.validUntil) {
+           if (typeof fetchedData.validUntil === 'string') {
+              parsedValidUntil = fetchedData.validUntil;
+           } else {
+              const d = fetchedData.validUntil.toDate ? fetchedData.validUntil.toDate() : new Date(fetchedData.validUntil);
+              parsedValidUntil = `${d.toLocaleString('default', { month: 'short' }).toUpperCase()}. ${d.getFullYear()}`;
+           }
+        }
 
         setFormattedDocsData({
           name: fetchedData.fullName || fetchedData.name || "",
@@ -54,15 +65,7 @@ const MemberDashboard = ({ initialTab = "profile" }) => {
           idNumber: fetchedData.memberId || "PENDING",
           phone: fetchedData.mobile || fetchedData.phone || "N/A",
           joinedSince: issueDateObj.toLocaleDateString("en-GB"),
-          
-          // 🔥 FIXED LOGIC: Ab ye database (admin update) ki date uthayega
-          validUntil: fetchedData.validUntil 
-            ? (typeof fetchedData.validUntil === 'string' 
-                ? fetchedData.validUntil 
-                : fetchedData.validUntil.toDate 
-                  ? fetchedData.validUntil.toDate().toLocaleDateString("en-GB") 
-                  : new Date(fetchedData.validUntil).toLocaleDateString("en-GB"))
-            : validUntilObj.toLocaleDateString("en-GB"),
+          validUntil: parsedValidUntil,
 
           address: fetchedData.address || (fetchedData.district ? `${fetchedData.district}, ${fetchedData.state}` : "N/A"),
           photo: fetchedData.photoUrl || "",

@@ -20,7 +20,7 @@ const AdminStatusTrack = ({ adminUid = "", currentAdmin = null }) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
-  const [filterType, setFilterType] = useState("Total");
+  const [filterType, setFilterType] = useState("Pending");
 
   const statusOptions = [
     { label: "Request Received", icon: <CheckCircle2 size={16} />, color: "text-blue-500" },

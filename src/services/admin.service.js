@@ -95,12 +95,17 @@ export async function approveApplication({ appId, adminUid, applicant }) {
         lastCertificateIdCounter: nextCertCounter,
         updatedAt: serverTimestamp(),
       });
+      
+      const validUntilDate = new Date();
+      validUntilDate.setFullYear(validUntilDate.getFullYear() + 1);
+      const validUntil = `${validUntilDate.toLocaleString('default', { month: 'short' }).toUpperCase()}. ${validUntilDate.getFullYear()}`;
 
       // 2. Update Application Record
       tx.update(appRef, {
         status: "Approved",
         memberId,
         certificateId,
+        validUntil,
         approvedBy: adminUid,
         approvedAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -121,7 +126,7 @@ export async function approveApplication({ appId, adminUid, applicant }) {
         certificateUrl: "",
       });
 
-      return { memberId, certificateId };
+      return { memberId, certificateId, validUntil };
     });
 
     // Handle User Creation in Secondary Auth
@@ -146,6 +151,7 @@ export async function approveApplication({ appId, adminUid, applicant }) {
       memberId: result.memberId,
       certificateId: result.certificateId,
       applicationId: appId,
+      validUntil: result.validUntil,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });

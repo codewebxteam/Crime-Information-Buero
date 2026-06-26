@@ -24,7 +24,7 @@ import OfficerManagement from "./OfficerManagement";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("id-gen");
+  const [activeTab, setActiveTab] = useState("status-track");
   const [currentAdmin, setCurrentAdmin] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showLogoutAnim, setShowLogoutAnim] = useState(false);

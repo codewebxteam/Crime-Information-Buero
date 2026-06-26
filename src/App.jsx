@@ -38,7 +38,20 @@ import AnchorDashboard from './dashboard/anchor/AnchorDashboard';
 
 // 1. Lenis Smooth Scroll Helper
 const SmoothScroll = ({ children }) => {
+  const location = useLocation();
+
   useLayoutEffect(() => {
+    const pathname = location.pathname.toLowerCase();
+    const isAdminPath = pathname.startsWith('/dashboard') || 
+                        pathname.startsWith('/admin') ||
+                        pathname.startsWith('/member') ||
+                        pathname.startsWith('/anchor');
+                        
+    if (isAdminPath) {
+      document.documentElement.style.overflow = 'auto'; // ensure global scroll is normal
+      return;
+    }
+
     const lenis = new Lenis({
       duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -61,7 +74,7 @@ const SmoothScroll = ({ children }) => {
     return () => {
       lenis.destroy();
     };
-  }, []);
+  }, [location.pathname]);
 
   return <>{children}</>;
 };

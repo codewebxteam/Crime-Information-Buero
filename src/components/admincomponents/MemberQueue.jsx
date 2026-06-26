@@ -1,14 +1,25 @@
 import React, { useState, useEffect } from "react";
-import { Search, Users } from "lucide-react";
+import { Search, Users, ChevronLeft, ChevronRight } from "lucide-react";
 
 const MemberQueue = ({ applications, selectedId, onSelect, filterType }) => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Search logic
   const filteredList = applications.filter((app) =>
     app.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     app.id?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Reset page when search or filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterType]);
+
+  const totalPages = Math.ceil(filteredList.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedList = filteredList.slice(startIndex, startIndex + itemsPerPage);
 
   // --- AUTO SELECT FIRST MEMBER LOGIC ---
   useEffect(() => {
@@ -18,7 +29,7 @@ const MemberQueue = ({ applications, selectedId, onSelect, filterType }) => {
   }, [filteredList, selectedId, onSelect, searchTerm]);
 
   return (
-    <div className="col-span-12 lg:col-span-4 bg-white dark:bg-[#111] p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] shadow-lg border border-gray-100 dark:border-white/5 flex flex-col h-[450px] lg:h-[550px]">
+    <div className="col-span-12 lg:col-span-4 bg-white dark:bg-[#111] p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] shadow-lg border border-gray-100 dark:border-white/5 flex flex-col">
       
       {/* Header - Responsive Spacing */}
       <div className="flex items-center justify-between mb-4 sm:mb-6 px-1 sm:px-2">
@@ -44,10 +55,10 @@ const MemberQueue = ({ applications, selectedId, onSelect, filterType }) => {
         </div>
       </div>
 
-      {/* Member List Area with Visible Scrollbar */}
-      <div className="space-y-2 sm:space-y-3 overflow-y-auto pr-2 custom-queue-scroll flex-1">
-        {filteredList.length > 0 ? (
-          filteredList.map((app) => (
+      {/* Member List Area without Scrollbar */}
+      <div className="space-y-2 sm:space-y-3 flex-1 flex flex-col justify-start">
+        {paginatedList.length > 0 ? (
+          paginatedList.map((app) => (
             <button
               key={app.id}
               onClick={() => onSelect(app.id)}
@@ -83,34 +94,28 @@ const MemberQueue = ({ applications, selectedId, onSelect, filterType }) => {
         )}
       </div>
 
-      {/* Style for Visible & Professional Scrollbar */}
-      <style>{`
-        .custom-queue-scroll::-webkit-scrollbar {
-          width: 6px;
-          display: block !important;
-        }
-        .custom-queue-scroll::-webkit-scrollbar-track {
-          background: #f1f1f1;
-          border-radius: 10px;
-        }
-        .custom-queue-scroll::-webkit-scrollbar-thumb {
-          background: #002B5B;
-          border-radius: 10px;
-        }
-        .custom-queue-scroll::-webkit-scrollbar-thumb:hover {
-          background: #ef4444;
-        }
-        .dark .custom-queue-scroll::-webkit-scrollbar-track {
-          background: #1a1a1a;
-        }
-        .dark .custom-queue-scroll::-webkit-scrollbar-thumb {
-          background: #333;
-        }
-        .custom-queue-scroll {
-          scrollbar-width: thin;
-          scrollbar-color: #002B5B #f1f1f1;
-        }
-      `}</style>
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="mt-6 pt-4 border-t border-gray-100 dark:border-white/5 flex items-center justify-between">
+          <button
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className={`p-2 rounded-lg flex items-center justify-center transition-all ${currentPage === 1 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-gray-100 dark:hover:bg-white/10 text-[#002B5B] dark:text-white'}`}
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <span className="text-[10px] font-black uppercase text-gray-400">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className={`p-2 rounded-lg flex items-center justify-center transition-all ${currentPage === totalPages ? 'opacity-30 cursor-not-allowed' : 'hover:bg-gray-100 dark:hover:bg-white/10 text-[#002B5B] dark:text-white'}`}
+          >
+            <ChevronRight size={20} />
+          </button>
+        </div>
+      )}
     </div>
   );
 };

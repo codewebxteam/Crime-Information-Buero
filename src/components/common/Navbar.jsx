@@ -65,11 +65,11 @@ const Navbar = () => {
         {/* 1. LEFT: Logo & Brand */}
         <Link to="/" className="flex items-center gap-3 shrink-0 cursor-pointer">
           <img src={cibiLogo} alt="CIB Logo" className="h-12 md:h-18 w-auto object-contain transition-transform duration-300 hover:scale-105" />
-          <div className="border-l-2 border-gray-300 dark:border-gray-800 pl-3 text-left">
-            <h1 className="text-xl md:text-2xl font-black tracking-tighter italic uppercase leading-none text-[#002B5B] dark:text-white text-nowrap">
+          <div className="border-l-2 border-gray-300 dark:border-gray-800 pl-3 text-left flex flex-col justify-center">
+            <h1 className="text-lg md:text-xl font-black tracking-tighter italic uppercase leading-none text-[#002B5B] dark:text-white text-nowrap">
               <span className="font-serif">Crime</span>
             </h1>
-            <p className="text-[7px] md:text-[9px] font-bold text-gray-400 dark:text-gray-500 tracking-[0.2em] uppercase mt-1">Information Bureau</p>
+            <p className="text-sm md:text-base font-black text-red-700 dark:text-red-600 tracking-widest uppercase mt-0.5">Information Bureau</p>
           </div>
         </Link>
 

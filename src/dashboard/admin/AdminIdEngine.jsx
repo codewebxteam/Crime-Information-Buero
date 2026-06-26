@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShieldCheck, Loader2, X, ShieldAlert, Database, Eye, Download, Menu } from "lucide-react";
 import { db } from "../../firebase/firebase";
-import { collection, getDocs, query, where, doc, updateDoc } from "firebase/firestore";
+import { collection, getDocs, query, where, doc, updateDoc, orderBy } from "firebase/firestore";
 
 // Engines
 import jsPDF from "jspdf";
@@ -42,6 +42,14 @@ const AdminIdEngine = () => {
         const q = query(collection(db, "membershipApplications"), where("status", "==", "Approved"));
         const snapshot = await getDocs(q);
         const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // Sort client-side to avoid Firebase Index requirement (newest first)
+        list.sort((a, b) => {
+          const dateA = a.approvedAt?.toMillis?.() || 0;
+          const dateB = b.approvedAt?.toMillis?.() || 0;
+          return dateB - dateA; 
+        });
+
         setApprovedMembers(list);
         if (list.length > 0) setSelectedMemberId(list[0].id);
       } catch (err) { console.error("Fetch Error:", err); } finally { setLoading(false); }
@@ -60,9 +68,13 @@ const AdminIdEngine = () => {
       rank: s.designation || s.membershipLabel || "Crime Reporter",
       idNumber: s.memberId || "",
       contact: s.mobile || s.phone || s.contact || "",
-      validUntil: s.validUntil || "OCT. 2026",
+      validUntil: s.validUntil || (function(){
+        const d = s.approvedAt?.toDate?.() ? new Date(s.approvedAt.toDate()) : new Date();
+        d.setFullYear(d.getFullYear() + 1);
+        return `${d.toLocaleString('default', { month: 'short' }).toUpperCase()}. ${d.getFullYear()}`;
+      })(),
       address: s.address || "Gorakhpur Division : Head Quarter",
-      photo: s.photoUrl || "",
+      photo: s.photoUrl || "https://placehold.co/150x150/001F3F/FFF?text=No+Photo",
     });
     setIsDataSynced(false);
   }, [selectedMemberId, approvedMembers]);

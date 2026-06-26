@@ -2,13 +2,15 @@ import React from 'react';
 
 import { useNavigate } from 'react-router-dom'; // Navigation ke liye
 
-import { ShieldAlert, Gavel, Scale, FileText, Globe, Landmark } from 'lucide-react';
+import { ShieldAlert, Gavel, Scale, FileText, Globe, Landmark, User } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 
 
 const Hero = () => {
 
   const navigate = useNavigate(); // Hook initialize kiya
+  const { user } = useAuth();
 
 
 
@@ -80,19 +82,23 @@ const Hero = () => {
 
           <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 w-full">
 
-            {/* FILE A REPORT BUTTON - Linking to FileReport.jsx */}
+            {/* CONDITIONAL MAIN BUTTON */}
 
-            <button
-
-              onClick={() => navigate('/file-report')}
-
-              className="w-full sm:w-auto flex items-center justify-center gap-3 bg-red-700 hover:bg-[#002B5B] text-white px-10 py-5 rounded-sm font-black uppercase tracking-widest transition-all shadow-[5px_5px_0px_0px_rgba(0,0,0,0.1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 cursor-pointer"
-
-            >
-
-              File A Report <FileText size={18} />
-
-            </button>
+            {user ? (
+              <button
+                onClick={() => navigate('/file-report')}
+                className="w-full sm:w-auto flex items-center justify-center gap-3 bg-red-700 hover:bg-[#002B5B] text-white px-10 py-5 rounded-sm font-black uppercase tracking-widest transition-all shadow-[5px_5px_0px_0px_rgba(0,0,0,0.1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 cursor-pointer"
+              >
+                File A Report <FileText size={18} />
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate('/login?type=member')}
+                className="w-full sm:w-auto flex items-center justify-center gap-3 bg-red-700 hover:bg-[#002B5B] text-white px-10 py-5 rounded-sm font-black uppercase tracking-widest transition-all shadow-[5px_5px_0px_0px_rgba(0,0,0,0.1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 cursor-pointer"
+              >
+                Apply for Membership <User size={18} />
+              </button>
+            )}
 
 
 
