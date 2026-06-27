@@ -119,7 +119,7 @@ const AdminLogin = () => {
 
             <form onSubmit={handleLogin} className="space-y-5">
               <div className="space-y-1.5">
-                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Admin Identity</label>
+                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Admin Email</label>
                 <div className="relative group/input">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within/input:text-red-700 transition-colors" size={16} />
                   <input
